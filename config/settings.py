@@ -65,6 +65,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://web-production-2c16c.up.railway.app",  # ← ganti dengan domain Railway kamu
+]
+
 LANGUAGE_CODE = "id"
 TIME_ZONE = "Asia/Jakarta"
 USE_I18N = True
