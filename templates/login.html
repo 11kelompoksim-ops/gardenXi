@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block auth_content %}
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+/>
+
+<div class="login-layout">
+
+  <!-- LEFT SIDE -->
+  <div
+    class="login-visual"
+    style="background-image:url('{% static "core/images/login-bg.webp" %}')"
+  >
+
+    <div class="login-overlay"></div>
+
+    <div class="login-content">
+
+      <div class="login-badge">
+        gardenXi
+      </div>
+
+      <h1 class="login-heading">
+        Seed Inventory & Financial Dashboard
+      </h1>
+
+      <p class="login-description">
+        Kelola pembelian, penjualan, retur, journalling, dan laporan keuangan
+        dalam satu dashboard yang sederhana dan modern.
+      </p>
+
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="login-panel">
+
+    <div class="login-card">
+
+      <div class="mb-4">
+
+        <div class="brand-mark mb-2">
+          gardenXi
+        </div>
+
+        <h2 class="fw-bold mb-1">
+          Welcome Back
+        </h2>
+
+        <p class="text-muted mb-0">
+          Login untuk melanjutkan.
+        </p>
+
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-danger">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+
+        {% csrf_token %}
+
+        <div class="mb-3">
+
+          <label class="form-label">
+            Username
+          </label>
+
+          <input
+            type="text"
+            name="username"
+            class="form-control form-control-lg"
+            required
+          >
+
+        </div>
+
+        <div class="mb-4">
+
+          <label class="form-label">
+            Password
+          </label>
+
+          <div class="password-wrapper">
+
+            <input
+              id="passwordInput"
+              type="password"
+              name="password"
+              class="form-control form-control-lg pe-5"
+              required
+            >
+
+            <button
+              type="button"
+              id="togglePassword"
+              class="password-toggle"
+            >
+              <i
+                id="eyeIcon"
+                class="bi bi-eye"
+              ></i>
+            </button>
+
+          </div>
+
+        </div>
+
+        <button
+          class="btn btn-primary btn-lg w-100"
+        >
+          Masuk
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+
+.login-layout{
+  min-height:100vh;
+  display:flex;
+  background:#f8fafc;
+}
+
+.login-visual{
+  flex:1;
+  position:relative;
+  background-size:cover;
+  background-position:center;
+  overflow:hidden;
+}
+
+.login-overlay{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(30,41,59,.75),
+      rgba(37,99,235,.45)
+    );
+}
+
+.login-content{
+  position:relative;
+  z-index:2;
+  color:#fff;
+  max-width:650px;
+  padding:80px;
+}
+
+.login-badge{
+  display:inline-block;
+  padding:10px 18px;
+  border-radius:999px;
+  background:rgba(255,255,255,.15);
+  backdrop-filter:blur(8px);
+  margin-bottom:28px;
+  font-weight:600;
+}
+
+.login-heading{
+  font-size:56px;
+  line-height:1.1;
+  font-weight:800;
+  margin-bottom:20px;
+}
+
+.login-description{
+  font-size:18px;
+  line-height:1.8;
+  opacity:.95;
+}
+
+.login-panel{
+  width:520px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px;
+}
+
+.login-card{
+  width:100%;
+  max-width:420px;
+}
+
+.password-wrapper{
+  position:relative;
+}
+
+.password-toggle{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  border:none;
+  background:none;
+  color:#666;
+  cursor:pointer;
+  font-size:18px;
+}
+
+.password-toggle:hover{
+  color:#3047c6;
+}
+
+.form-control{
+  border-radius:14px;
+}
+
+.btn-primary{
+  border-radius:14px;
+}
+
+/* TABLET */
+
+@media (max-width: 992px){
+
+  .login-layout{
+    flex-direction:column;
+  }
+
+  .login-visual{
+    min-height:280px;
+  }
+
+  .login-content{
+    padding:40px 30px;
+  }
+
+  .login-heading{
+    font-size:36px;
+  }
+
+  .login-panel{
+    width:100%;
+    padding:24px;
+  }
+
+}
+
+/* MOBILE */
+
+@media (max-width: 576px){
+
+  .login-visual{
+    display:none;
+  }
+
+  .login-panel{
+    min-height:100vh;
+    background:
+      linear-gradient(
+        rgba(255,255,255,.94),
+        rgba(255,255,255,.94)
+      ),
+      url('{% static "core/images/login-bg.webp" %}');
+    background-size:cover;
+    background-position:center;
+  }
+
+  .login-card{
+    background:#fff;
+    padding:24px;
+    border-radius:24px;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
+  }
+
+}
+
+</style>
+
+<script>
+
+const passwordInput =
+  document.getElementById("passwordInput");
+
+const togglePassword =
+  document.getElementById("togglePassword");
+
+const eyeIcon =
+  document.getElementById("eyeIcon");
+
+togglePassword.addEventListener("click", () => {
+
+  if(passwordInput.type === "password"){
+
+    passwordInput.type = "text";
+
+    eyeIcon.classList.remove("bi-eye");
+    eyeIcon.classList.add("bi-eye-slash");
+
+  }else{
+
+    passwordInput.type = "password";
+
+    eyeIcon.classList.remove("bi-eye-slash");
+    eyeIcon.classList.add("bi-eye");
+
+  }
+
+});
+
+</script>
+
+{% endblock %}

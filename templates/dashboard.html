@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+  <div>
+    <h1 class="page-title mb-1">Dashboard</h1>
+    <p class="text-muted mb-0">Grafik keuntungan per bulan dan ringkasan transaksi.</p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="?year={{ prev_year }}">Previous</a>
+    <button class="btn btn-primary" disabled>{{ selected_year }}</button>
+    <a class="btn btn-outline-primary" href="?year={{ next_year }}">Next</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  {% for stat in stats %}
+  <div class="col-12 col-md-6 col-xl-2">
+    <div class="card card-soft h-100">
+      <div class="card-body">
+        <div class="stat-label">{{ stat.label }}</div>
+        <div class="stat-value">{{ stat.value }}</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card card-soft">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="mb-1">Grafik Keuntungan Bulanan</h5>
+        <div class="text-muted small">Data per bulan untuk tahun {{ selected_year }}</div>
+      </div>
+    </div>
+    <canvas id="profitChart" height="110"></canvas>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = {{ chart_labels|safe }};
+  const values = {{ chart_values|safe }};
+
+  new Chart(document.getElementById('profitChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Keuntungan',
+        data: values
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

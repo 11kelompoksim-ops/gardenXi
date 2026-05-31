@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+  <div>
+    <h1 class="page-title mb-1">Laporan</h1>
+    <p class="text-muted mb-0">
+      Ringkasan keuangan berdasarkan rentang tanggal.
+    </p>
+  </div>
+</div>
+
+<div class="card card-soft mb-4">
+  <div class="card-body">
+
+    <form method="get" class="row g-3">
+
+      {% for field in form %}
+      <div class="col-md-4">
+        <label class="form-label">
+          {{ field.label }}
+        </label>
+        {{ field }}
+      </div>
+      {% endfor %}
+
+      <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary">
+          Tampilkan
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+  <div class="col-md-3">
+    <div class="card card-soft">
+      <div class="card-body">
+        <div class="stat-label">Dana Kotor</div>
+        <div class="stat-value">{{ gross_movement }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-soft">
+      <div class="card-body">
+        <div class="stat-label">Dana Masuk</div>
+        <div class="stat-value">{{ gross_in }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-soft">
+      <div class="card-body">
+        <div class="stat-label">Dana Keluar</div>
+        <div class="stat-value">{{ gross_out }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-soft">
+      <div class="card-body">
+        <div class="stat-label">Dana Bersih</div>
+        <div class="stat-value">{{ net }}</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="card card-soft">
+  <div class="card-body">
+
+    <div class="table-responsive">
+
+      <table class="table table-hover">
+
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Jenis</th>
+            <th>Detail</th>
+            <th>Dana Masuk</th>
+            <th>Dana Keluar</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {% for row in records %}
+          <tr>
+
+            <td>
+              {{ row.date|date:"d/m/Y H:i" }}
+            </td>
+
+            <td>
+              {{ row.type }}
+            </td>
+
+            <td>
+              {{ row.detail }}
+            </td>
+
+            <td>
+              {% if row.in_amount %}
+                Rp {{ row.in_amount }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>
+              {% if row.out_amount %}
+                Rp {{ row.out_amount }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4">
+              Belum ada data
+            </td>
+          </tr>
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
