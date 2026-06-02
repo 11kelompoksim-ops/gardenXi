@@ -510,21 +510,30 @@ def journal_delete(request, pk):
 @login_required
 def report_view(request):
     today = timezone.localdate()
-    initial = {"start_date": today.replace(day=1), "end_date": today}
+    default_start = today.replace(day=1)
+    default_end = today
 
     mode = request.GET.get("mode", "buku_besar")
-    form = ReportFilterForm(request.GET or None, initial=initial)
+
+    # Ambil tanggal dari GET, fallback ke default bulan ini
+    try:
+        from datetime import datetime
+        start_date = datetime.strptime(request.GET.get("start_date", ""), "%Y-%m-%d").date()
+    except ValueError:
+        start_date = default_start
+
+    try:
+        from datetime import datetime
+        end_date = datetime.strptime(request.GET.get("end_date", ""), "%Y-%m-%d").date()
+    except ValueError:
+        end_date = default_end
+
+    form = ReportFilterForm(initial={"start_date": start_date, "end_date": end_date})
 
     context = {
         "form": form,
         "mode": mode,
     }
-
-    if not form.is_valid():
-        return render(request, "report.html", context)
-
-    start_date = form.cleaned_data["start_date"]
-    end_date = form.cleaned_data["end_date"]
 
     purchases = Purchase.objects.filter(created_at__date__range=(start_date, end_date)).select_related("seed")
     sales = Sale.objects.filter(created_at__date__range=(start_date, end_date)).select_related("seed")
