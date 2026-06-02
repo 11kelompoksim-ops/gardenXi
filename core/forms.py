@@ -20,7 +20,7 @@ class PurchaseForm(BootstrapFormMixin, forms.Form):
     vendor_name = forms.CharField(label="Nama Vendor")
     seed_name = forms.CharField(label="Nama Barang")
     qty = forms.IntegerField(
-        label="Qty",
+        label="Qty (Kg)",
         min_value=1,
     )
     unit_price = forms.DecimalField(
@@ -34,7 +34,7 @@ class PurchaseForm(BootstrapFormMixin, forms.Form):
 class HarvestStockForm(BootstrapFormMixin, forms.Form):
     seed_name = forms.CharField(label="Nama Barang")
     qty = forms.IntegerField(
-        label="Qty",
+        label="Qty (Kg)",
         min_value=1,
     )
     note = forms.CharField(
@@ -57,7 +57,7 @@ class SaleForm(BootstrapFormMixin, forms.Form):
     )
 
     qty = forms.IntegerField(
-        label="Qty",
+        label="Qty (Kg)",
         min_value=1,
     )
 
@@ -103,7 +103,7 @@ class ReturnForm(BootstrapFormMixin, forms.Form):
     )
 
     qty = forms.IntegerField(
-        label="Qty Retur",
+        label="Qty (Kg) Retur",
         min_value=1,
     )
 
