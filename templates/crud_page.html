@@ -15,8 +15,9 @@
   <div class="col-md-4">
     <div class="card card-soft">
       <div class="card-body">
-        <div class="stat-label">Saldo Total</div>
-        <div class="stat-value">{{ balance }}</div>
+        <div class="card card-soft border-{{ balance_color }}">Status Balance</div>
+        <div class="stat-value text-{{ balance_color }}">{{ balance }}</div>
+        <small class="text-muted">{{ balance_note }}</small>
       </div>
     </div>
   </div>
@@ -24,7 +25,7 @@
   <div class="col-md-4">
     <div class="card card-soft">
       <div class="card-body">
-        <div class="stat-label">Total Masuk</div>
+        <div class="stat-label">Total Debit</div>
         <div class="stat-value">{{ income }}</div>
       </div>
     </div>
@@ -33,7 +34,7 @@
   <div class="col-md-4">
     <div class="card card-soft">
       <div class="card-body">
-        <div class="stat-label">Total Keluar</div>
+        <div class="stat-label">Total Kredit</div>
         <div class="stat-value">{{ expense }}</div>
       </div>
     </div>

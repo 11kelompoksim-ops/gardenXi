@@ -524,6 +524,13 @@ def journal_list(request):
     )
 
     balance = total_income - total_expense
+    balance_status = "Balance" if balance >= 0 else "Unbalance"
+    balance_color = "success" if balance >= 0 else "danger"
+    balance_note = (
+        f"Surplus {money(balance)}" if balance > 0
+        else "Impas" if balance == 0
+        else f"Defisit {money(abs(balance))}"
+    )
 
     context = {
         "page_title": "Journalling",
@@ -538,7 +545,9 @@ def journal_list(request):
         ],
         "form": form,
         "rows": rows,
-        "balance": money(balance),
+        "balance": balance_status,
+        "balance_note": balance_note,
+        "balance_color": balance_color,
         "income": money(total_income),
         "expense": money(total_expense),
     }
