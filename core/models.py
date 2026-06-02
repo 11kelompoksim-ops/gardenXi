@@ -91,21 +91,26 @@ class ReturnTransaction(models.Model):
 
 
 class JournalEntry(models.Model):
-    INCOME = "IN"
-    EXPENSE = "OUT"
+    DEBIT = "DB"
+    KREDIT = "KR"
 
     DIRECTION_CHOICES = [
-        (INCOME, "Pemasukan"),
-        (EXPENSE, "Pengeluaran"),
+        (DEBIT, "Debit"),
+        (KREDIT, "Kredit"),
     ]
 
+    # Untuk backward compat dengan views yang pakai INCOME/EXPENSE
+    INCOME = "DB"
+    EXPENSE = "KR"
+
+    account_name = models.CharField(max_length=120)
     direction = models.CharField(max_length=3, choices=DIRECTION_CHOICES)
     amount = models.DecimalField(max_digits=14, decimal_places=2)
     note = models.CharField(max_length=255, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField()
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.get_direction_display()} - {self.amount}"
+        return f"{self.account_name} - {self.get_direction_display()} - {self.amount}"

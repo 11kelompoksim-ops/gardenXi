@@ -34,7 +34,7 @@ class PurchaseForm(BootstrapFormMixin, forms.Form):
 class HarvestStockForm(BootstrapFormMixin, forms.Form):
     seed_name = forms.CharField(label="Nama Barang")
     qty = forms.IntegerField(
-        label="Qty (Kg)",
+        label="Qty",
         min_value=1,
     )
     note = forms.CharField(
@@ -57,12 +57,12 @@ class SaleForm(BootstrapFormMixin, forms.Form):
     )
 
     qty = forms.IntegerField(
-        label="Qty (Kg)",
+        label="Qty",
         min_value=1,
     )
 
     unit_price = forms.DecimalField(
-        label="Harga Jual per Kg",
+        label="Harga Jual per Item",
         min_value=0,
         max_digits=14,
         decimal_places=2,
@@ -103,7 +103,7 @@ class ReturnForm(BootstrapFormMixin, forms.Form):
     )
 
     qty = forms.IntegerField(
-        label="Qty (Kg) Retur",
+        label="Qty Retur",
         min_value=1,
     )
 
@@ -123,8 +123,10 @@ class ReturnForm(BootstrapFormMixin, forms.Form):
 
 
 class JournalForm(BootstrapFormMixin, forms.Form):
+    account_name = forms.CharField(label="Nama Akun")
+
     direction = forms.ChoiceField(
-        label="Akun",
+        label="Posisi",
         choices=JournalEntry.DIRECTION_CHOICES,
     )
 
@@ -140,9 +142,13 @@ class JournalForm(BootstrapFormMixin, forms.Form):
         required=False,
     )
 
+    created_at = forms.DateTimeField(
+        label="Tanggal & Jam",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.fields["note"].widget = forms.TextInput()
         self.fields["note"].widget.attrs["class"] = "form-control"
 
