@@ -62,7 +62,7 @@ class SaleForm(BootstrapFormMixin, forms.Form):
     )
 
     unit_price = forms.DecimalField(
-        label="Harga Jual per Item",
+        label="Harga Jual per Kg",
         min_value=0,
         max_digits=14,
         decimal_places=2,
