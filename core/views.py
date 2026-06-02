@@ -231,7 +231,7 @@ def harvest_list(request):
         "page_title": "Stok Panen",
         "page_subtitle": "Kelola stok hasil panen. Stok ini digunakan sebagai sumber penjualan.",
         "add_title": "Tambah Stok Panen",
-        "columns": ["Tanggal", "Barang", "Qty Masuk", "Stok Tersedia", "Keterangan"],
+        "columns": ["Tanggal", "Barang", "Qty (Kg)Masuk", "Stok Tersedia", "Keterangan"],
         "form": form,
         "rows": rows,
     }
@@ -308,7 +308,7 @@ def sale_list(request):
         "page_title": "Penjualan",
         "page_subtitle": "Harga jual diisi manual. Stok mengacu pada stok panen.",
         "add_title": "Tambah Penjualan",
-        "columns": ["Tanggal", "Pembeli", "Barang", "Qty", "Harga per Item", "Total"],
+        "columns": ["Tanggal", "Pembeli", "Barang", "Qty (Kg)", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }
@@ -379,7 +379,7 @@ def return_list(request):
         "page_title": "Retur",
         "page_subtitle": "Retur mengikuti transaksi penjualan.",
         "add_title": "Tambah Retur",
-        "columns": ["Tanggal", "Pembeli", "Barang", "Qty", "Harga per Item", "Total"],
+        "columns": ["Tanggal", "Pembeli", "Barang", "Qty (Kg)", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }

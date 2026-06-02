@@ -20,7 +20,7 @@ class PurchaseForm(BootstrapFormMixin, forms.Form):
     vendor_name = forms.CharField(label="Nama Vendor")
     seed_name = forms.CharField(label="Nama Barang")
     qty = forms.IntegerField(
-        label="Qty (Kg)",
+        label="Qty",
         min_value=1,
     )
     unit_price = forms.DecimalField(
