@@ -82,7 +82,7 @@ class ReturnForm(BootstrapFormMixin, forms.Form):
 
 class JournalForm(BootstrapFormMixin, forms.Form):
     direction = forms.ChoiceField(
-        label="Jenis",
+        label="Akun",
         choices=JournalEntry.DIRECTION_CHOICES,
     )
 
