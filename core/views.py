@@ -531,7 +531,7 @@ def journal_list(request):
         "add_title": "Tambah Jurnal Kas",
         "columns": [
             "Tanggal",
-            "Sumber",
+            "Akun",
             "Keterangan",
             "Dana Masuk",
             "Dana Keluar",
