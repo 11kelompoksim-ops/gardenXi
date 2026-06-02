@@ -527,9 +527,9 @@ def journal_list(request):
     balance_status = "Balance" if balance >= 0 else "Unbalance"
     balance_color = "success" if balance >= 0 else "danger"
     balance_note = (
-        f"Surplus {money(balance)}" if balance > 0
-        else "Impas" if balance == 0
-        else f"Defisit {money(abs(balance))}"
+        f"Lebih {money(balance)}" if balance > 0
+        else "Seimbang" if balance == 0
+        else f"Kurang {money(abs(balance))}"
     )
 
     context = {
