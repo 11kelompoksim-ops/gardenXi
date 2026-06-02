@@ -391,6 +391,7 @@ def journal_list(request):
             "note": item.note or "-",
             "income": item.amount if item.direction == JournalEntry.INCOME else 0,
             "expense": item.amount if item.direction == JournalEntry.EXPENSE else 0,
+            "delete_url": reverse("journal_delete", args=[item.id]),  # ← tambahkan ini
         })
 
     transactions.sort(key=lambda x: x["date"], reverse=True)
@@ -405,7 +406,7 @@ def journal_list(request):
                 money(trx["income"]) if trx["income"] else "-",
                 money(trx["expense"]) if trx["expense"] else "-",
             ],
-            "delete_url": "#",
+            "delete_url": trx.get("delete_url", "#")
         })
 
     total_sales = sum_amount(Sale.objects.all(), "total_in")
