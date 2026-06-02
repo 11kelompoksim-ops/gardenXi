@@ -22,6 +22,27 @@ def money(value):
 def sum_amount(qs, field_name):
     return qs.aggregate(total=Sum(field_name))["total"] or 0
 
+def merge_same_dates(rows):
+    last_date = None
+
+    for row in rows:
+        current = row["cells"][0]
+
+        if not current:
+            continue
+
+        try:
+            date_only = current.split(" ")[0]
+        except Exception:
+            date_only = current
+
+        if date_only == last_date:
+            row["cells"][0] = ""
+        else:
+            last_date = date_only
+
+    return rows
+
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -155,7 +176,7 @@ def purchase_list(request):
         }
         for item in items
     ]
-
+    rows = merge_same_dates(rows)
     context = {
         "page_title": "Pembelian",
         "page_subtitle": "Input pembelian barang dan lihat total keluar otomatis.",
@@ -225,7 +246,7 @@ def harvest_list(request):
             ],
             "delete_url": reverse("harvest_delete", args=[item.id]),
         })
-
+    rows = merge_same_dates(rows)
     context = {
         "page_title": "Stok Panen",
         "page_subtitle": "Kelola stok hasil panen. Stok ini digunakan sebagai sumber penjualan.",
@@ -300,7 +321,7 @@ def sale_list(request):
             ],
             "delete_url": reverse("sale_delete", args=[item.id]),
         })
-
+    rows = merge_same_dates(rows)
     context = {
         "page_title": "Penjualan",
         "page_subtitle": "Harga jual diisi manual. Stok mengacu pada stok panen.",
@@ -371,7 +392,7 @@ def return_list(request):
             ],
             "delete_url": reverse("return_delete", args=[item.id]),
         })
-
+    rows = merge_same_dates(rows)
     context = {
         "page_title": "Retur",
         "page_subtitle": "Retur mengikuti transaksi penjualan.",
@@ -412,33 +433,6 @@ def journal_list(request):
 
     transactions = []
 
-    for item in Sale.objects.select_related("seed").all():
-        transactions.append({
-            "date": item.created_at,
-            "source": "Penjualan",
-            "note": f"{item.buyer_name} - {item.seed.name}",
-            "debit": item.total_in,
-            "kredit": 0,
-        })
-
-    for item in Purchase.objects.select_related("seed").all():
-        transactions.append({
-            "date": item.created_at,
-            "source": "Pembelian",
-            "note": f"{item.vendor_name} - {item.seed.name}",
-            "debit": 0,
-            "kredit": item.total_out,
-        })
-
-    for item in ReturnTransaction.objects.select_related("seed").all():
-        transactions.append({
-            "date": item.created_at,
-            "source": "Retur",
-            "note": f"{item.buyer_name} - {item.seed.name}",
-            "debit": 0,
-            "kredit": item.total_out,
-        })
-
     for item in JournalEntry.objects.all():
         transactions.append({
             "date": item.created_at,
@@ -463,15 +457,21 @@ def journal_list(request):
             ],
             "delete_url": trx.get("delete_url", "#"),
         })
+    rows = merge_same_dates(rows)
 
-    total_sales = sum_amount(Sale.objects.all(), "total_in")
-    total_purchase = sum_amount(Purchase.objects.all(), "total_out")
-    total_return = sum_amount(ReturnTransaction.objects.all(), "total_out")
-    manual_debit = sum_amount(JournalEntry.objects.filter(direction=JournalEntry.DEBIT), "amount")
-    manual_kredit = sum_amount(JournalEntry.objects.filter(direction=JournalEntry.KREDIT), "amount")
+    total_debit = sum_amount(
+        JournalEntry.objects.filter(
+            direction=JournalEntry.DEBIT
+        ),
+        "amount"
+    )
 
-    total_debit = total_sales + manual_debit
-    total_kredit = total_purchase + total_return + manual_kredit
+    total_kredit = sum_amount(
+        JournalEntry.objects.filter(
+            direction=JournalEntry.KREDIT
+        ),
+        "amount"
+    )
 
     balance = total_debit - total_kredit
     balance_status = "Balance" if balance == 0 else "Unbalance"
