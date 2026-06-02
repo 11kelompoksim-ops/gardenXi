@@ -158,9 +158,9 @@ def purchase_list(request):
 
     context = {
         "page_title": "Pembelian",
-        "page_subtitle": "Input pembelian benih dan lihat total keluar otomatis.",
+        "page_subtitle": "Input pembelian barang dan lihat total keluar otomatis.",
         "add_title": "Tambah Pembelian",
-        "columns": ["Tanggal", "Vendor", "Benih", "Qty", "Harga per Item", "Total"],
+        "columns": ["Tanggal", "Vendor", "Barang", "Qty", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }
@@ -219,7 +219,7 @@ def sale_list(request):
             )
 
             if not latest_purchase:
-                messages.error(request, "Benih belum pernah dibeli.")
+                messages.error(request, "Barang belum pernah dibeli.")
                 return redirect("sales")
 
             Sale.objects.create(
@@ -252,7 +252,7 @@ def sale_list(request):
         "page_title": "Penjualan",
         "page_subtitle": "Harga otomatis mengikuti pembelian terakhir.",
         "add_title": "Tambah Penjualan",
-        "columns": ["Tanggal", "Pembeli", "Benih", "Qty", "Harga per Item", "Total"],
+        "columns": ["Tanggal", "Pembeli", "Barang", "Qty", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }
@@ -323,7 +323,7 @@ def return_list(request):
         "page_title": "Retur",
         "page_subtitle": "Retur mengikuti transaksi penjualan.",
         "add_title": "Tambah Retur",
-        "columns": ["Tanggal", "Pembeli", "Benih", "Qty", "Harga per Item", "Total"],
+        "columns": ["Tanggal", "Pembeli", "Barang", "Qty", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }
