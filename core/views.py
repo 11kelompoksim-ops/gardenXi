@@ -231,7 +231,7 @@ def harvest_list(request):
         "page_title": "Stok Panen",
         "page_subtitle": "Kelola stok hasil panen. Stok ini digunakan sebagai sumber penjualan.",
         "add_title": "Tambah Stok Panen",
-        "columns": ["Tanggal", "Barang", "Qty (Kg)Masuk", "Stok Tersedia", "Keterangan"],
+        "columns": ["Tanggal", "Barang", "Qty (Kg) Masuk", "Stok Tersedia", "Keterangan"],
         "form": form,
         "rows": rows,
     }
