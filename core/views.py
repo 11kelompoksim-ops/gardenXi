@@ -278,7 +278,7 @@ def sale_list(request):
             "Benih",
             "Qty",
             "Harga per Item",
-            "Saldo Masuk",
+            "Total",
         ],
         "form": form,
         "rows": rows,
