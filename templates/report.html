@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<div class="mb-4">
+<div class="mb-4 no-print">
   <div class="btn-group flex-wrap gap-1" role="group">
     <a href="?mode=buku_besar{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}"
        class="btn {% if mode == 'buku_besar' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
@@ -36,7 +36,7 @@
   </div>
 </div>
 
-<div class="card card-soft mb-4">
+<div class="card card-soft mb-4 no-print">
   <div class="card-body">
     <form method="get" class="row g-3">
       <input type="hidden" name="mode" value="{{ mode }}">
@@ -46,11 +46,29 @@
         {{ field }}
       </div>
       {% endfor %}
-      <div class="col-md-4 d-flex align-items-end">
+      <div class="col-md-4 d-flex align-items-end gap-2">
         <button class="btn btn-primary">Tampilkan</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="downloadPDF()">
+          Download PDF
+        </button>
       </div>
     </form>
   </div>
+</div>
+
+{# Judul yang hanya muncul saat print #}
+<div class="print-only-title">
+  <h4>
+    {% if mode == 'buku_besar' %}Buku Besar
+    {% elif mode == 'neraca_saldo' %}Neraca Saldo
+    {% elif mode == 'jurnal_penyesuaian' %}Jurnal Penyesuaian
+    {% elif mode == 'jurnal_penutup' %}Jurnal Penutup
+    {% elif mode == 'laba_rugi' %}Laporan Laba Rugi
+    {% endif %}
+  </h4>
+  {% if request.GET.start_date %}
+  <p>Periode: {{ request.GET.start_date }} s/d {{ request.GET.end_date }}</p>
+  {% endif %}
 </div>
 
 
@@ -315,5 +333,58 @@
 </div>
 
 {% endif %}
+
+
+<script>
+function downloadPDF() {
+  const modeLabels = {
+    'buku_besar': 'Buku Besar',
+    'neraca_saldo': 'Neraca Saldo',
+    'jurnal_penyesuaian': 'Jurnal Penyesuaian',
+    'jurnal_penutup': 'Jurnal Penutup',
+    'laba_rugi': 'Laporan Laba Rugi',
+  };
+  const mode = "{{ mode }}";
+  const originalTitle = document.title;
+  document.title = modeLabels[mode] || 'Laporan';
+  window.print();
+  document.title = originalTitle;
+}
+</script>
+
+<style>
+.print-only-title {
+  display: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only-title {
+    display: block;
+    margin-bottom: 1.5rem;
+  }
+  .print-only-title h4 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+  }
+  .print-only-title p {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+}
+</style>
 
 {% endblock %}
