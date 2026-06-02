@@ -11,137 +11,311 @@
   </div>
 </div>
 
-<div class="card card-soft mb-4">
-  <div class="card-body">
-
-    <form method="get" class="row g-3">
-
-      {% for field in form %}
-      <div class="col-md-4">
-        <label class="form-label">
-          {{ field.label }}
-        </label>
-        {{ field }}
-      </div>
-      {% endfor %}
-
-      <div class="col-md-4 d-flex align-items-end">
-        <button class="btn btn-primary">
-          Tampilkan
-        </button>
-      </div>
-
-    </form>
-
+{{# Pill/Button Group Navigation #}}
+<div class="mb-4">
+  <div class="btn-group flex-wrap gap-1" role="group">
+    <a href="?mode=buku_besar{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}"
+       class="btn {% if mode == 'buku_besar' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Buku Besar
+    </a>
+    <a href="?mode=neraca_saldo{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}"
+       class="btn {% if mode == 'neraca_saldo' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Neraca Saldo
+    </a>
+    <a href="?mode=jurnal_penyesuaian{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}"
+       class="btn {% if mode == 'jurnal_penyesuaian' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Jurnal Penyesuaian
+    </a>
+    <a href="?mode=jurnal_penutup{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}"
+       class="btn {% if mode == 'jurnal_penutup' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Jurnal Penutup
+    </a>
+    <a href="?mode=laba_rugi{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}"
+       class="btn {% if mode == 'laba_rugi' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Laporan Laba Rugi
+    </a>
   </div>
 </div>
 
+{{# Filter Tanggal #}}
+<div class="card card-soft mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <input type="hidden" name="mode" value="{{ mode }}">
+      {% for field in form %}
+      <div class="col-md-4">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+      </div>
+      {% endfor %}
+      <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary">Tampilkan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# ======================== BUKU BESAR ======================== #}
+{% if mode == 'buku_besar' %}
+
+<p class="text-muted mb-3">
+  Seluruh transaksi dikelompokkan berdasarkan akun, lengkap dengan saldo berjalan.
+</p>
+
+{% for akun, data in buku_besar.items %}
+<div class="card card-soft mb-4">
+  <div class="card-body">
+    <h6 class="fw-bold mb-3">{{ akun }}</h6>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Keterangan</th>
+            <th>Debit</th>
+            <th>Kredit</th>
+            <th>Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+          <tr>
+            <td>{{ row.date|date:"d/m/Y H:i" }}</td>
+            <td>{{ row.detail }}</td>
+            <td>{% if row.debit %}{{ row.debit }}{% else %}-{% endif %}</td>
+            <td>{% if row.kredit %}{{ row.kredit }}{% else %}-{% endif %}</td>
+            <td>{{ row.saldo }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-3">Belum ada data</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% empty %}
+<div class="card card-soft">
+  <div class="card-body text-center py-4 text-muted">Belum ada data untuk periode ini.</div>
+</div>
+{% endfor %}
+
+
+{# ======================== NERACA SALDO ======================== #}
+{% elif mode == 'neraca_saldo' %}
+
+<p class="text-muted mb-3">
+  Daftar seluruh akun beserta total saldo debit dan kredit dalam periode yang dipilih.
+</p>
+
 <div class="row g-3 mb-4">
-
-  <div class="col-md-3">
+  <div class="col-md-4">
     <div class="card card-soft">
       <div class="card-body">
-        <div class="stat-label">Dana Kotor</div>
-        <div class="stat-value">{{ gross_movement }}</div>
+        <div class="stat-label">Total Debit</div>
+        <div class="stat-value">{{ total_debit }}</div>
       </div>
     </div>
   </div>
-
-  <div class="col-md-3">
+  <div class="col-md-4">
     <div class="card card-soft">
       <div class="card-body">
-        <div class="stat-label">Dana Masuk</div>
-        <div class="stat-value">{{ gross_in }}</div>
+        <div class="stat-label">Total Kredit</div>
+        <div class="stat-value">{{ total_kredit }}</div>
       </div>
     </div>
   </div>
-
-  <div class="col-md-3">
-    <div class="card card-soft">
+  <div class="col-md-4">
+    <div class="card card-soft border-{{ neraca_color }}">
       <div class="card-body">
-        <div class="stat-label">Kredit</div>
-        <div class="stat-value">{{ gross_out }}</div>
+        <div class="stat-label">Status</div>
+        <div class="stat-value text-{{ neraca_color }}">{{ neraca_status }}</div>
       </div>
     </div>
   </div>
-
-  <div class="col-md-3">
-    <div class="card card-soft">
-      <div class="card-body">
-        <div class="stat-label">Dana Bersih</div>
-        <div class="stat-value">{{ net }}</div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <div class="card card-soft">
   <div class="card-body">
-
     <div class="table-responsive">
-
       <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Akun</th>
+            <th>Total Debit</th>
+            <th>Total Kredit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in neraca_rows %}
+          <tr>
+            <td>{{ row.akun }}</td>
+            <td>{% if row.debit %}{{ row.debit }}{% else %}-{% endif %}</td>
+            <td>{% if row.kredit %}{{ row.kredit }}{% else %}-{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-center py-4">Belum ada data</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="fw-bold">
+          <tr>
+            <td>Total</td>
+            <td>{{ total_debit }}</td>
+            <td>{{ total_kredit }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
 
+
+{# ======================== JURNAL PENYESUAIAN ======================== #}
+{% elif mode == 'jurnal_penyesuaian' %}
+
+<p class="text-muted mb-3">
+  Transaksi penyesuaian otomatis dari data jurnal manual pada periode yang dipilih.
+</p>
+
+<div class="card card-soft">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Akun</th>
+            <th>Nominal</th>
+            <th>Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in penyesuaian_rows %}
+          <tr>
+            <td>{{ row.date|date:"d/m/Y H:i" }}</td>
+            <td>{{ row.akun }}</td>
+            <td>{{ row.nominal }}</td>
+            <td>{{ row.keterangan }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center py-4">Belum ada data jurnal penyesuaian</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+{# ======================== JURNAL PENUTUP ======================== #}
+{% elif mode == 'jurnal_penutup' %}
+
+<p class="text-muted mb-3">
+  Penutupan akun nominal (pendapatan & beban) pada akhir periode untuk menghitung laba/rugi.
+</p>
+
+<div class="card card-soft">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Akun</th>
+            <th>Keterangan</th>
+            <th>Debit</th>
+            <th>Kredit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in penutup_rows %}
+          <tr>
+            <td>{{ row.akun }}</td>
+            <td>{{ row.keterangan }}</td>
+            <td>{% if row.debit %}{{ row.debit }}{% else %}-{% endif %}</td>
+            <td>{% if row.kredit %}{{ row.kredit }}{% else %}-{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+{# ======================== LABA RUGI ======================== #}
+{% elif mode == 'laba_rugi' %}
+
+<p class="text-muted mb-3">
+  Ringkasan pendapatan dan beban usaha dalam periode yang dipilih.
+</p>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card card-soft">
+      <div class="card-body">
+        <div class="stat-label">Total Pendapatan</div>
+        <div class="stat-value text-success">{{ gross_in }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-soft">
+      <div class="card-body">
+        <div class="stat-label">Total Beban</div>
+        <div class="stat-value text-danger">{{ gross_out }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-soft border-{{ lr_color }}">
+      <div class="card-body">
+        <div class="stat-label">{{ lr_label }}</div>
+        <div class="stat-value text-{{ lr_color }}">{{ net }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-soft">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
         <thead>
           <tr>
             <th>Tanggal</th>
             <th>Akun</th>
             <th>Detail</th>
-            <th>Debit</th>
-            <th>Kredit</th>
+            <th>Pendapatan</th>
+            <th>Beban</th>
           </tr>
         </thead>
-
         <tbody>
-
           {% for row in records %}
           <tr>
-
-            <td>
-              {{ row.date|date:"d/m/Y H:i" }}
-            </td>
-
-            <td>
-              {{ row.type }}
-            </td>
-
-            <td>
-              {{ row.detail }}
-            </td>
-
-            <td>
-              {% if row.in_amount %}
-                Rp {{ row.in_amount }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-
-            <td>
-              {% if row.out_amount %}
-                Rp {{ row.out_amount }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-
+            <td>{{ row.date|date:"d/m/Y H:i" }}</td>
+            <td>{{ row.type }}</td>
+            <td>{{ row.detail }}</td>
+            <td>{% if row.in_amount %}{{ row.in_amount }}{% else %}-{% endif %}</td>
+            <td>{% if row.out_amount %}{{ row.out_amount }}{% else %}-{% endif %}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center py-4">
-              Belum ada data
-            </td>
+            <td colspan="5" class="text-center py-4">Belum ada data</td>
           </tr>
           {% endfor %}
-
         </tbody>
-
       </table>
-
     </div>
-
   </div>
 </div>
+
+{% endif %}
 
 {% endblock %}

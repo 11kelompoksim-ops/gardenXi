@@ -184,30 +184,24 @@ def sale_list(request):
             .aggregate(total=Sum("qty"))["total"]
             or 0
         )
-
         sold = (
             Sale.objects.filter(seed=seed)
             .aggregate(total=Sum("qty"))["total"]
             or 0
         )
-
         returned = (
             ReturnTransaction.objects.filter(seed=seed)
             .aggregate(total=Sum("qty"))["total"]
             or 0
         )
-
         return purchased - sold + returned
 
     if request.method == "POST":
         form = SaleForm(request.POST)
-
         if form.is_valid():
             data = form.cleaned_data
-
             seed = data["seed"]
             qty = data["qty"]
-
             stock = get_stock(seed)
 
             if qty > stock:
@@ -225,10 +219,7 @@ def sale_list(request):
             )
 
             if not latest_purchase:
-                messages.error(
-                    request,
-                    "Benih belum pernah dibeli."
-                )
+                messages.error(request, "Benih belum pernah dibeli.")
                 return redirect("sales")
 
             Sale.objects.create(
@@ -237,21 +228,13 @@ def sale_list(request):
                 qty=qty,
                 unit_price=latest_purchase.unit_price,
             )
-
-            messages.success(
-                request,
-                "Data penjualan berhasil disimpan."
-            )
-
+            messages.success(request, "Data penjualan berhasil disimpan.")
             return redirect("sales")
-
     else:
         form = SaleForm()
 
     items = Sale.objects.select_related("seed").all()
-
     rows = []
-
     for item in items:
         rows.append({
             "cells": [
@@ -262,33 +245,18 @@ def sale_list(request):
                 money(item.unit_price),
                 money(item.total_in),
             ],
-            "delete_url": reverse(
-                "sale_delete",
-                args=[item.id]
-            ),
+            "delete_url": reverse("sale_delete", args=[item.id]),
         })
 
     context = {
         "page_title": "Penjualan",
         "page_subtitle": "Harga otomatis mengikuti pembelian terakhir.",
         "add_title": "Tambah Penjualan",
-        "columns": [
-            "Tanggal",
-            "Pembeli",
-            "Benih",
-            "Qty",
-            "Harga per Item",
-            "Total",
-        ],
+        "columns": ["Tanggal", "Pembeli", "Benih", "Qty", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }
-
-    return render(
-        request,
-        "crud_page.html",
-        context,
-    )
+    return render(request, "crud_page.html", context)
 
 
 @login_required
@@ -304,10 +272,8 @@ def sale_delete(request, pk):
 def return_list(request):
     if request.method == "POST":
         form = ReturnForm(request.POST)
-
         if form.is_valid():
             data = form.cleaned_data
-
             sale_obj = data["source_sale"]
             qty = data["qty"]
 
@@ -317,10 +283,7 @@ def return_list(request):
                 .aggregate(total=Sum("qty"))["total"]
                 or 0
             )
-
-            remaining_qty = (
-                sale_obj.qty - already_returned
-            )
+            remaining_qty = sale_obj.qty - already_returned
 
             if qty > remaining_qty:
                 messages.error(
@@ -336,28 +299,13 @@ def return_list(request):
                 qty=qty,
                 unit_price=sale_obj.unit_price,
             )
-
-            messages.success(
-                request,
-                "Data retur berhasil disimpan."
-            )
-
+            messages.success(request, "Data retur berhasil disimpan.")
             return redirect("returns")
-
     else:
         form = ReturnForm()
 
-    items = (
-        ReturnTransaction.objects
-        .select_related(
-            "seed",
-            "source_sale"
-        )
-        .all()
-    )
-
+    items = ReturnTransaction.objects.select_related("seed", "source_sale").all()
     rows = []
-
     for item in items:
         rows.append({
             "cells": [
@@ -368,33 +316,18 @@ def return_list(request):
                 money(item.unit_price),
                 money(item.total_out),
             ],
-            "delete_url": reverse(
-                "return_delete",
-                args=[item.id]
-            ),
+            "delete_url": reverse("return_delete", args=[item.id]),
         })
 
     context = {
         "page_title": "Retur",
         "page_subtitle": "Retur mengikuti transaksi penjualan.",
         "add_title": "Tambah Retur",
-        "columns": [
-            "Tanggal",
-            "Pembeli",
-            "Benih",
-            "Qty",
-            "Harga per Item",
-            "Total",
-        ],
+        "columns": ["Tanggal", "Pembeli", "Benih", "Qty", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }
-
-    return render(
-        request,
-        "crud_page.html",
-        context,
-    )
+    return render(request, "crud_page.html", context)
 
 
 @login_required
@@ -410,16 +343,13 @@ def return_delete(request, pk):
 def journal_list(request):
     if request.method == "POST":
         form = JournalForm(request.POST)
-
         if form.is_valid():
             data = form.cleaned_data
-
             JournalEntry.objects.create(
                 direction=data["direction"],
                 amount=data["amount"],
                 note=data["note"],
             )
-
             messages.success(request, "Jurnal manual berhasil disimpan.")
             return redirect("journals")
     else:
@@ -427,7 +357,6 @@ def journal_list(request):
 
     transactions = []
 
-    # PENJUALAN -> MASUK
     for item in Sale.objects.select_related("seed").all():
         transactions.append({
             "date": item.created_at,
@@ -437,7 +366,6 @@ def journal_list(request):
             "expense": 0,
         })
 
-    # PEMBELIAN -> KELUAR
     for item in Purchase.objects.select_related("seed").all():
         transactions.append({
             "date": item.created_at,
@@ -447,7 +375,6 @@ def journal_list(request):
             "expense": item.total_out,
         })
 
-    # RETUR -> KELUAR
     for item in ReturnTransaction.objects.select_related("seed").all():
         transactions.append({
             "date": item.created_at,
@@ -457,7 +384,6 @@ def journal_list(request):
             "expense": item.total_out,
         })
 
-    # JURNAL MANUAL
     for item in JournalEntry.objects.all():
         transactions.append({
             "date": item.created_at,
@@ -467,13 +393,9 @@ def journal_list(request):
             "expense": item.amount if item.direction == JournalEntry.EXPENSE else 0,
         })
 
-    transactions.sort(
-        key=lambda x: x["date"],
-        reverse=True
-    )
+    transactions.sort(key=lambda x: x["date"], reverse=True)
 
     rows = []
-
     for trx in transactions:
         rows.append({
             "cells": [
@@ -486,42 +408,14 @@ def journal_list(request):
             "delete_url": "#",
         })
 
-    total_sales = sum_amount(
-        Sale.objects.all(),
-        "total_in"
-    )
-
-    total_purchase = sum_amount(
-        Purchase.objects.all(),
-        "total_out"
-    )
-
-    total_return = sum_amount(
-        ReturnTransaction.objects.all(),
-        "total_out"
-    )
-
-    manual_income = sum_amount(
-        JournalEntry.objects.filter(
-            direction=JournalEntry.INCOME
-        ),
-        "amount"
-    )
-
-    manual_expense = sum_amount(
-        JournalEntry.objects.filter(
-            direction=JournalEntry.EXPENSE
-        ),
-        "amount"
-    )
+    total_sales = sum_amount(Sale.objects.all(), "total_in")
+    total_purchase = sum_amount(Purchase.objects.all(), "total_out")
+    total_return = sum_amount(ReturnTransaction.objects.all(), "total_out")
+    manual_income = sum_amount(JournalEntry.objects.filter(direction=JournalEntry.INCOME), "amount")
+    manual_expense = sum_amount(JournalEntry.objects.filter(direction=JournalEntry.EXPENSE), "amount")
 
     total_income = total_sales + manual_income
-
-    total_expense = (
-        total_purchase
-        + total_return
-        + manual_expense
-    )
+    total_expense = total_purchase + total_return + manual_expense
 
     balance = total_income - total_expense
     balance_status = "Balance" if balance == 0 else "Unbalance"
@@ -536,13 +430,7 @@ def journal_list(request):
         "page_title": "Journalling",
         "page_subtitle": "Arus kas otomatis dari sistem dan manual.",
         "add_title": "Tambah Jurnal Kas",
-        "columns": [
-            "Tanggal",
-            "Akun",
-            "Keterangan",
-            "Debit",
-            "Kredit",
-        ],
+        "columns": ["Tanggal", "Akun", "Keterangan", "Debit", "Kredit"],
         "form": form,
         "rows": rows,
         "balance": balance_status,
@@ -551,12 +439,7 @@ def journal_list(request):
         "income": money(total_income),
         "expense": money(total_expense),
     }
-
-    return render(
-        request,
-        "crud_page.html",
-        context,
-    )
+    return render(request, "crud_page.html", context)
 
 
 @login_required
@@ -573,81 +456,203 @@ def report_view(request):
     today = timezone.localdate()
     initial = {"start_date": today.replace(day=1), "end_date": today}
 
+    mode = request.GET.get("mode", "buku_besar")
     form = ReportFilterForm(request.GET or None, initial=initial)
-    records = []
-    gross_in = 0
-    gross_out = 0
 
-    if form.is_valid():
-        start_date = form.cleaned_data["start_date"]
-        end_date = form.cleaned_data["end_date"]
+    # Base context
+    context = {
+        "form": form,
+        "mode": mode,
+    }
 
-        purchases = Purchase.objects.filter(created_at__date__range=(start_date, end_date))
-        sales = Sale.objects.filter(created_at__date__range=(start_date, end_date))
-        returns = ReturnTransaction.objects.filter(created_at__date__range=(start_date, end_date))
-        journals = JournalEntry.objects.filter(created_at__date__range=(start_date, end_date))
+    if not form.is_valid():
+        return render(request, "report.html", context)
 
-        gross_in = sum_amount(sales, "total_in") + sum_amount(
-            journals.filter(direction=JournalEntry.INCOME), "amount"
-        )
-        gross_out = (
-            sum_amount(purchases, "total_out")
-            + sum_amount(returns, "total_out")
-            + sum_amount(journals.filter(direction=JournalEntry.EXPENSE), "amount")
-        )
+    start_date = form.cleaned_data["start_date"]
+    end_date = form.cleaned_data["end_date"]
+
+    purchases = Purchase.objects.filter(created_at__date__range=(start_date, end_date)).select_related("seed")
+    sales = Sale.objects.filter(created_at__date__range=(start_date, end_date)).select_related("seed")
+    returns = ReturnTransaction.objects.filter(created_at__date__range=(start_date, end_date)).select_related("seed")
+    journals = JournalEntry.objects.filter(created_at__date__range=(start_date, end_date))
+
+    gross_in = sum_amount(sales, "total_in") + sum_amount(
+        journals.filter(direction=JournalEntry.INCOME), "amount"
+    )
+    gross_out = (
+        sum_amount(purchases, "total_out")
+        + sum_amount(returns, "total_out")
+        + sum_amount(journals.filter(direction=JournalEntry.EXPENSE), "amount")
+    )
+    net = gross_in - gross_out
+
+    # ======================== BUKU BESAR ========================
+    if mode == "buku_besar":
+        # Kumpulkan semua transaksi per akun
+        buku_besar = {}
+
+        def add_entry(akun, date, detail, debit=0, kredit=0):
+            if akun not in buku_besar:
+                buku_besar[akun] = {"rows": [], "saldo": 0}
+            buku_besar[akun]["saldo"] += debit - kredit
+            buku_besar[akun]["rows"].append({
+                "date": date,
+                "detail": detail,
+                "debit": money(debit) if debit else None,
+                "kredit": money(kredit) if kredit else None,
+                "saldo": money(buku_besar[akun]["saldo"]),
+            })
 
         for item in purchases:
-            records.append(
-                {
-                    "date": item.created_at,
-                    "type": "Pembelian",
-                    "detail": f"{item.vendor_name} - {item.seed.name}",
-                    "in_amount": 0,
-                    "out_amount": item.total_out,
-                }
-            )
+            add_entry("Pembelian", item.created_at, f"{item.vendor_name} - {item.seed.name}", kredit=item.total_out)
+
         for item in sales:
-            records.append(
-                {
-                    "date": item.created_at,
-                    "type": "Penjualan",
-                    "detail": f"{item.buyer_name} - {item.seed.name}",
-                    "in_amount": item.total_in,
-                    "out_amount": 0,
-                }
-            )
+            add_entry("Penjualan", item.created_at, f"{item.buyer_name} - {item.seed.name}", debit=item.total_in)
+
         for item in returns:
-            records.append(
-                {
-                    "date": item.created_at,
-                    "type": "Retur",
-                    "detail": f"{item.buyer_name} - {item.seed.name}",
-                    "in_amount": 0,
-                    "out_amount": item.total_out,
-                }
-            )
+            add_entry("Retur", item.created_at, f"{item.buyer_name} - {item.seed.name}", kredit=item.total_out)
+
         for item in journals:
-            records.append(
-                {
-                    "date": item.created_at,
-                    "type": f"Jurnal {item.get_direction_display()}",
-                    "detail": item.note or "-",
-                    "in_amount": item.amount if item.direction == JournalEntry.INCOME else 0,
-                    "out_amount": item.amount if item.direction == JournalEntry.EXPENSE else 0,
-                }
-            )
+            akun = f"Jurnal {item.get_direction_display()}"
+            if item.direction == JournalEntry.INCOME:
+                add_entry(akun, item.created_at, item.note or "-", debit=item.amount)
+            else:
+                add_entry(akun, item.created_at, item.note or "-", kredit=item.amount)
+
+        # Flatten untuk template
+        buku_besar_flat = {
+            akun: data["rows"]
+            for akun, data in buku_besar.items()
+        }
+
+        context["buku_besar"] = buku_besar_flat
+
+    # ======================== NERACA SALDO ========================
+    elif mode == "neraca_saldo":
+        total_penjualan = sum_amount(sales, "total_in")
+        total_pembelian = sum_amount(purchases, "total_out")
+        total_retur = sum_amount(returns, "total_out")
+        manual_in = sum_amount(journals.filter(direction=JournalEntry.INCOME), "amount")
+        manual_out = sum_amount(journals.filter(direction=JournalEntry.EXPENSE), "amount")
+
+        neraca_rows = [
+            {"akun": "Penjualan", "debit": money(total_penjualan) if total_penjualan else None, "kredit": None},
+            {"akun": "Pembelian", "debit": None, "kredit": money(total_pembelian) if total_pembelian else None},
+            {"akun": "Retur", "debit": None, "kredit": money(total_retur) if total_retur else None},
+        ]
+
+        if manual_in:
+            neraca_rows.append({"akun": "Jurnal Masuk (Manual)", "debit": money(manual_in), "kredit": None})
+        if manual_out:
+            neraca_rows.append({"akun": "Jurnal Keluar (Manual)", "debit": None, "kredit": money(manual_out)})
+
+        total_debit_val = total_penjualan + manual_in
+        total_kredit_val = total_pembelian + total_retur + manual_out
+
+        neraca_status = "Seimbang" if total_debit_val == total_kredit_val else "Tidak Seimbang"
+        neraca_color = "success" if total_debit_val == total_kredit_val else "danger"
+
+        context.update({
+            "neraca_rows": neraca_rows,
+            "total_debit": money(total_debit_val),
+            "total_kredit": money(total_kredit_val),
+            "neraca_status": neraca_status,
+            "neraca_color": neraca_color,
+        })
+
+    # ======================== JURNAL PENYESUAIAN ========================
+    elif mode == "jurnal_penyesuaian":
+        # Diambil dari JournalEntry manual saja (jurnal penyesuaian = entri manual)
+        penyesuaian_rows = []
+        for item in journals:
+            penyesuaian_rows.append({
+                "date": item.created_at,
+                "akun": f"Jurnal {item.get_direction_display()}",
+                "nominal": money(item.amount),
+                "keterangan": item.note or "-",
+            })
+
+        context["penyesuaian_rows"] = penyesuaian_rows
+
+    # ======================== JURNAL PENUTUP ========================
+    elif mode == "jurnal_penutup":
+        # Tutup akun pendapatan dan beban ke ikhtisar laba rugi
+        total_pendapatan = gross_in
+        total_beban = gross_out
+        laba_rugi = net
+
+        penutup_rows = [
+            {
+                "akun": "Pendapatan",
+                "keterangan": "Menutup akun pendapatan ke Ikhtisar Laba Rugi",
+                "debit": money(total_pendapatan),
+                "kredit": None,
+            },
+            {
+                "akun": "Beban",
+                "keterangan": "Menutup akun beban ke Ikhtisar Laba Rugi",
+                "debit": None,
+                "kredit": money(total_beban),
+            },
+            {
+                "akun": "Ikhtisar Laba Rugi",
+                "keterangan": "Laba bersih" if laba_rugi >= 0 else "Rugi bersih",
+                "debit": money(abs(laba_rugi)) if laba_rugi < 0 else None,
+                "kredit": money(laba_rugi) if laba_rugi >= 0 else None,
+            },
+        ]
+
+        context["penutup_rows"] = penutup_rows
+
+    # ======================== LABA RUGI ========================
+    elif mode == "laba_rugi":
+        records = []
+
+        for item in purchases:
+            records.append({
+                "date": item.created_at,
+                "type": "Pembelian",
+                "detail": f"{item.vendor_name} - {item.seed.name}",
+                "in_amount": None,
+                "out_amount": money(item.total_out),
+            })
+        for item in sales:
+            records.append({
+                "date": item.created_at,
+                "type": "Penjualan",
+                "detail": f"{item.buyer_name} - {item.seed.name}",
+                "in_amount": money(item.total_in),
+                "out_amount": None,
+            })
+        for item in returns:
+            records.append({
+                "date": item.created_at,
+                "type": "Retur",
+                "detail": f"{item.buyer_name} - {item.seed.name}",
+                "in_amount": None,
+                "out_amount": money(item.total_out),
+            })
+        for item in journals:
+            records.append({
+                "date": item.created_at,
+                "type": f"Jurnal {item.get_direction_display()}",
+                "detail": item.note or "-",
+                "in_amount": money(item.amount) if item.direction == JournalEntry.INCOME else None,
+                "out_amount": money(item.amount) if item.direction == JournalEntry.EXPENSE else None,
+            })
 
         records.sort(key=lambda x: x["date"], reverse=True)
 
-    gross_movement = gross_in + gross_out
-    net = gross_in - gross_out
+        lr_label = "Laba Bersih" if net >= 0 else "Rugi Bersih"
+        lr_color = "success" if net >= 0 else "danger"
 
-    context = {
-        "form": form,
-        "records": records,
-        "gross_in": money(gross_in),
-        "gross_out": money(gross_out),
-        "gross_movement": money(gross_movement),
-        "net": money(net),
-    }
+        context.update({
+            "records": records,
+            "gross_in": money(gross_in),
+            "gross_out": money(gross_out),
+            "net": money(abs(net)),
+            "lr_label": lr_label,
+            "lr_color": lr_color,
+        })
+
     return render(request, "report.html", context)
