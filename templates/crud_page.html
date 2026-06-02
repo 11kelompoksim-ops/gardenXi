@@ -72,6 +72,32 @@
 
 <div class="card card-soft">
   <div class="card-body">
+    <div class="card card-soft">
+  <div class="card-body">
+    <div class="d-flex justify-content-end mb-3">
+      <form method="get">
+        <select
+          name="sort"
+          class="form-select"
+          style="width: 180px"
+          onchange="this.form.submit()"
+        >
+          <option value="latest"
+            {% if current_sort == "latest" %}selected{% endif %}
+          >
+            Terbaru
+          </option>
+
+          <option value="oldest"
+            {% if current_sort == "oldest" %}selected{% endif %}
+          >
+            Terlama
+          </option>
+        </select>
+      </form>
+    </div>
+
+    <div class="table-responsive">
 
     <div class="table-responsive">
 
