@@ -524,8 +524,8 @@ def journal_list(request):
     )
 
     balance = total_income - total_expense
-    balance_status = "Balance" if balance >= 0 else "Unbalance"
-    balance_color = "success" if balance >= 0 else "danger"
+    balance_status = "Balance" if balance == 0 else "Unbalance"
+    balance_color = "success" if balance == 0 else "danger"
     balance_note = (
         f"Lebih {money(balance)}" if balance > 0
         else "Seimbang" if balance == 0
