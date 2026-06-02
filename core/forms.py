@@ -18,7 +18,7 @@ class BootstrapFormMixin:
 
 class PurchaseForm(BootstrapFormMixin, forms.Form):
     vendor_name = forms.CharField(label="Nama Vendor")
-    seed_name = forms.CharField(label="Nama Benih")
+    seed_name = forms.CharField(label="Nama Barang")
     qty = forms.IntegerField(
         label="Qty",
         min_value=1,
@@ -37,7 +37,7 @@ class SaleForm(BootstrapFormMixin, forms.Form):
     )
 
     seed = forms.ModelChoiceField(
-        label="Benih",
+        label="Barang",
         queryset=Seed.objects.none()
     )
 
