@@ -158,9 +158,9 @@ def purchase_list(request):
 
     context = {
         "page_title": "Pembelian",
-        "page_subtitle": "Input pembelian benih dan lihat saldo keluar otomatis.",
+        "page_subtitle": "Input pembelian benih dan lihat total keluar otomatis.",
         "add_title": "Tambah Pembelian",
-        "columns": ["Tanggal", "Vendor", "Benih", "Qty", "Harga per Item", "Saldo Keluar"],
+        "columns": ["Tanggal", "Vendor", "Benih", "Qty", "Harga per Item", "Total"],
         "form": form,
         "rows": rows,
     }
