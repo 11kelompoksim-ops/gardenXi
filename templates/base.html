@@ -73,6 +73,13 @@
         </a>
 
         <a
+          class="sidebar-link {% if request.resolver_match.url_name == 'harvests' %}active{% endif %}"
+          href="{% url 'harvests' %}"
+        >
+          Stok Panen
+        </a>
+
+        <a
           class="sidebar-link {% if request.resolver_match.url_name == 'sales' %}active{% endif %}"
           href="{% url 'sales' %}"
         >

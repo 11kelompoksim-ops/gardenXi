@@ -31,14 +31,29 @@ class PurchaseForm(BootstrapFormMixin, forms.Form):
     )
 
 
-class SaleForm(BootstrapFormMixin, forms.Form):
-    buyer_name = forms.CharField(
-        label="Nama Pembeli"
+class HarvestStockForm(BootstrapFormMixin, forms.Form):
+    seed_name = forms.CharField(label="Nama Barang")
+    qty = forms.IntegerField(
+        label="Qty",
+        min_value=1,
     )
+    note = forms.CharField(
+        label="Keterangan",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["note"].widget = forms.TextInput()
+        self.fields["note"].widget.attrs["class"] = "form-control"
+
+
+class SaleForm(BootstrapFormMixin, forms.Form):
+    buyer_name = forms.CharField(label="Nama Pembeli")
 
     seed = forms.ModelChoiceField(
         label="Barang",
-        queryset=Seed.objects.none()
+        queryset=Seed.objects.none(),
     )
 
     qty = forms.IntegerField(
@@ -46,18 +61,45 @@ class SaleForm(BootstrapFormMixin, forms.Form):
         min_value=1,
     )
 
+    unit_price = forms.DecimalField(
+        label="Harga Jual per Item",
+        min_value=0,
+        max_digits=14,
+        decimal_places=2,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["seed"].queryset = (
-            Seed.objects.order_by("name")
-        )
+        from django.db.models import Sum
+        from .models import HarvestStock, ReturnTransaction
+
+        available_seed_ids = []
+        for seed in Seed.objects.all():
+            total_harvest = (
+                HarvestStock.objects.filter(seed=seed)
+                .aggregate(total=Sum("qty"))["total"] or 0
+            )
+            total_sold = (
+                Sale.objects.filter(seed=seed)
+                .aggregate(total=Sum("qty"))["total"] or 0
+            )
+            total_returned = (
+                ReturnTransaction.objects.filter(seed=seed)
+                .aggregate(total=Sum("qty"))["total"] or 0
+            )
+            if (total_harvest - total_sold + total_returned) > 0:
+                available_seed_ids.append(seed.id)
+
+        self.fields["seed"].queryset = Seed.objects.filter(
+            id__in=available_seed_ids
+        ).order_by("name")
 
 
 class ReturnForm(BootstrapFormMixin, forms.Form):
     source_sale = forms.ModelChoiceField(
         label="Transaksi Penjualan",
-        queryset=Sale.objects.none()
+        queryset=Sale.objects.none(),
     )
 
     qty = forms.IntegerField(
@@ -102,10 +144,7 @@ class JournalForm(BootstrapFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
 
         self.fields["note"].widget = forms.TextInput()
-
-        self.fields["note"].widget.attrs["class"] = (
-            "form-control"
-        )
+        self.fields["note"].widget.attrs["class"] = "form-control"
 
 
 class ReportFilterForm(BootstrapFormMixin, forms.Form):

@@ -10,6 +10,9 @@ urlpatterns = [
     path("pembelian/", views.purchase_list, name="purchases"),
     path("pembelian/hapus/<int:pk>/", views.purchase_delete, name="purchase_delete"),
 
+    path("stok-panen/", views.harvest_list, name="harvests"),
+    path("stok-panen/hapus/<int:pk>/", views.harvest_delete, name="harvest_delete"),
+
     path("penjualan/", views.sale_list, name="sales"),
     path("penjualan/hapus/<int:pk>/", views.sale_delete, name="sale_delete"),
 

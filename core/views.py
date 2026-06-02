@@ -10,8 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import PurchaseForm, SaleForm, ReturnForm, JournalForm, ReportFilterForm
-from .models import Seed, Purchase, Sale, ReturnTransaction, JournalEntry
+from .forms import PurchaseForm, HarvestStockForm, SaleForm, ReturnForm, JournalForm, ReportFilterForm
+from .models import Seed, Purchase, HarvestStock, Sale, ReturnTransaction, JournalEntry
 
 
 def money(value):
@@ -176,57 +176,113 @@ def purchase_delete(request, pk):
     return redirect("purchases")
 
 
+# ======================== STOK PANEN ========================
+
+def get_harvest_stock(seed):
+    """Hitung stok panen tersedia: total harvest - total terjual + total retur."""
+    total_harvest = (
+        HarvestStock.objects.filter(seed=seed)
+        .aggregate(total=Sum("qty"))["total"] or 0
+    )
+    total_sold = (
+        Sale.objects.filter(seed=seed)
+        .aggregate(total=Sum("qty"))["total"] or 0
+    )
+    total_returned = (
+        ReturnTransaction.objects.filter(seed=seed)
+        .aggregate(total=Sum("qty"))["total"] or 0
+    )
+    return total_harvest - total_sold + total_returned
+
+
+@login_required
+def harvest_list(request):
+    if request.method == "POST":
+        form = HarvestStockForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            seed, _ = Seed.objects.get_or_create(name=data["seed_name"].strip())
+            HarvestStock.objects.create(
+                seed=seed,
+                qty=data["qty"],
+                note=data["note"],
+            )
+            messages.success(request, "Stok panen berhasil disimpan.")
+            return redirect("harvests")
+    else:
+        form = HarvestStockForm()
+
+    items = HarvestStock.objects.select_related("seed").all()
+    rows = []
+    for item in items:
+        stok_tersedia = get_harvest_stock(item.seed)
+        rows.append({
+            "cells": [
+                item.created_at.strftime("%d/%m/%Y %H:%M"),
+                item.seed.name,
+                item.qty,
+                stok_tersedia,
+                item.note or "-",
+            ],
+            "delete_url": reverse("harvest_delete", args=[item.id]),
+        })
+
+    context = {
+        "page_title": "Stok Panen",
+        "page_subtitle": "Kelola stok hasil panen. Stok ini digunakan sebagai sumber penjualan.",
+        "add_title": "Tambah Stok Panen",
+        "columns": ["Tanggal", "Barang", "Qty Masuk", "Stok Tersedia", "Keterangan"],
+        "form": form,
+        "rows": rows,
+    }
+    return render(request, "crud_page.html", context)
+
+
+@login_required
+def harvest_delete(request, pk):
+    if request.method == "POST":
+        obj = get_object_or_404(HarvestStock, pk=pk)
+        # Cek apakah penghapusan akan membuat stok negatif
+        stok_saat_ini = get_harvest_stock(obj.seed)
+        stok_setelah_hapus = stok_saat_ini - obj.qty
+        if stok_setelah_hapus < 0:
+            messages.error(
+                request,
+                f"Tidak bisa hapus. Stok {obj.seed.name} akan menjadi negatif "
+                f"karena sudah ada penjualan yang menggunakan stok ini."
+            )
+            return redirect("harvests")
+        obj.delete()
+        messages.success(request, "Data stok panen dihapus.")
+    return redirect("harvests")
+
+
+# ======================== PENJUALAN ========================
+
 @login_required
 def sale_list(request):
-    def get_stock(seed):
-        purchased = (
-            Purchase.objects.filter(seed=seed)
-            .aggregate(total=Sum("qty"))["total"]
-            or 0
-        )
-        sold = (
-            Sale.objects.filter(seed=seed)
-            .aggregate(total=Sum("qty"))["total"]
-            or 0
-        )
-        returned = (
-            ReturnTransaction.objects.filter(seed=seed)
-            .aggregate(total=Sum("qty"))["total"]
-            or 0
-        )
-        return purchased - sold + returned
-
     if request.method == "POST":
         form = SaleForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
             seed = data["seed"]
             qty = data["qty"]
-            stock = get_stock(seed)
+            unit_price = data["unit_price"]
 
-            if qty > stock:
+            # Cek stok panen
+            stok = get_harvest_stock(seed)
+            if qty > stok:
                 messages.error(
                     request,
-                    f"Stok {seed.name} tidak mencukupi. Stok tersedia: {stock}"
+                    f"Stok panen {seed.name} tidak mencukupi. Stok tersedia: {stok}"
                 )
-                return redirect("sales")
-
-            latest_purchase = (
-                Purchase.objects
-                .filter(seed=seed)
-                .order_by("-created_at")
-                .first()
-            )
-
-            if not latest_purchase:
-                messages.error(request, "Barang belum pernah dibeli.")
                 return redirect("sales")
 
             Sale.objects.create(
                 buyer_name=data["buyer_name"],
                 seed=seed,
                 qty=qty,
-                unit_price=latest_purchase.unit_price,
+                unit_price=unit_price,
             )
             messages.success(request, "Data penjualan berhasil disimpan.")
             return redirect("sales")
@@ -250,7 +306,7 @@ def sale_list(request):
 
     context = {
         "page_title": "Penjualan",
-        "page_subtitle": "Harga otomatis mengikuti pembelian terakhir.",
+        "page_subtitle": "Harga jual diisi manual. Stok mengacu pada stok panen.",
         "add_title": "Tambah Penjualan",
         "columns": ["Tanggal", "Pembeli", "Barang", "Qty", "Harga per Item", "Total"],
         "form": form,
@@ -391,7 +447,7 @@ def journal_list(request):
             "note": item.note or "-",
             "income": item.amount if item.direction == JournalEntry.INCOME else 0,
             "expense": item.amount if item.direction == JournalEntry.EXPENSE else 0,
-            "delete_url": reverse("journal_delete", args=[item.id]),  # ← tambahkan ini
+            "delete_url": reverse("journal_delete", args=[item.id]),
         })
 
     transactions.sort(key=lambda x: x["date"], reverse=True)
@@ -460,7 +516,6 @@ def report_view(request):
     mode = request.GET.get("mode", "buku_besar")
     form = ReportFilterForm(request.GET or None, initial=initial)
 
-    # Base context
     context = {
         "form": form,
         "mode": mode,
@@ -489,7 +544,6 @@ def report_view(request):
 
     # ======================== BUKU BESAR ========================
     if mode == "buku_besar":
-        # Kumpulkan semua transaksi per akun
         buku_besar = {}
 
         def add_entry(akun, date, detail, debit=0, kredit=0):
@@ -520,7 +574,6 @@ def report_view(request):
             else:
                 add_entry(akun, item.created_at, item.note or "-", kredit=item.amount)
 
-        # Flatten untuk template
         buku_besar_flat = {
             akun: data["rows"]
             for akun, data in buku_besar.items()
@@ -563,7 +616,6 @@ def report_view(request):
 
     # ======================== JURNAL PENYESUAIAN ========================
     elif mode == "jurnal_penyesuaian":
-        # Diambil dari JournalEntry manual saja (jurnal penyesuaian = entri manual)
         penyesuaian_rows = []
         for item in journals:
             penyesuaian_rows.append({
@@ -577,7 +629,6 @@ def report_view(request):
 
     # ======================== JURNAL PENUTUP ========================
     elif mode == "jurnal_penutup":
-        # Tutup akun pendapatan dan beban ke ikhtisar laba rugi
         total_pendapatan = gross_in
         total_beban = gross_out
         laba_rugi = net
