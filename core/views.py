@@ -384,7 +384,7 @@ def return_list(request):
             "Benih",
             "Qty",
             "Harga per Item",
-            "Dana Keluar",
+            "Total",
         ],
         "form": form,
         "rows": rows,
