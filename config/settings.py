@@ -66,7 +66,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://web-production-2c16c.up.railway.app",  # ← ganti dengan domain Railway kamu
+    "https://gardenxi.up.railway.app/",  # ← ganti dengan domain Railway kamu
 ]
 
 LANGUAGE_CODE = "id"

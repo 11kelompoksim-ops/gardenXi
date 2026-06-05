@@ -124,7 +124,7 @@
 {% elif mode == 'neraca_saldo' %}
 
 <p class="text-muted mb-3">
-  Daftar seluruh akun beserta total saldo debit dan kredit dalam periode yang dipilih.
+  Daftar seluruh akun beserta total saldo debit dan kredit dalam periode yang dipilih. Dikelompokkan sesuai standar akuntansi.
 </p>
 
 <div class="row g-3 mb-4">
@@ -157,12 +157,12 @@
 <div class="card card-soft">
   <div class="card-body">
     <div class="table-responsive">
-      <table class="table table-hover">
+      <table class="table table-hover mb-0">
         <thead>
           <tr>
-            <th>Akun</th>
-            <th>Total Debit</th>
-            <th>Total Kredit</th>
+            <th>Nama Akun</th>
+            <th>Debit</th>
+            <th>Kredit</th>
           </tr>
         </thead>
         <tbody>
@@ -178,7 +178,7 @@
           </tr>
           {% endfor %}
         </tbody>
-        <tfoot class="fw-bold">
+        <tfoot class="fw-bold table-light">
           <tr>
             <td>Total</td>
             <td>{{ total_debit }}</td>
@@ -195,7 +195,7 @@
 {% elif mode == 'jurnal_penyesuaian' %}
 
 <p class="text-muted mb-3">
-  Transaksi penyesuaian otomatis dari data jurnal manual pada periode yang dipilih.
+  Jurnal penyesuaian per tanggal akhir periode: <strong>{{ end_date_display }}</strong>.
 </p>
 
 <div class="card card-soft">
@@ -205,18 +205,18 @@
         <thead>
           <tr>
             <th>Tanggal</th>
-            <th>Akun</th>
-            <th>Nominal</th>
-            <th>Keterangan</th>
+            <th>Nama Akun</th>
+            <th>Debit</th>
+            <th>Kredit</th>
           </tr>
         </thead>
         <tbody>
           {% for row in penyesuaian_rows %}
           <tr>
-            <td>{{ row.date|date:"d/m/Y H:i" }}</td>
+            <td>{{ row.date }}</td>
             <td>{{ row.akun }}</td>
-            <td>{{ row.nominal }}</td>
-            <td>{{ row.keterangan }}</td>
+            <td>{% if row.debit %}{{ row.debit }}{% else %}-{% endif %}</td>
+            <td>{% if row.kredit %}{{ row.kredit }}{% else %}-{% endif %}</td>
           </tr>
           {% empty %}
           <tr>
@@ -272,63 +272,69 @@
   Ringkasan pendapatan dan beban usaha dalam periode yang dipilih.
 </p>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="card card-soft">
-      <div class="card-body">
-        <div class="stat-label">Total Pendapatan</div>
-        <div class="stat-value text-success">{{ gross_in }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card card-soft">
-      <div class="card-body">
-        <div class="stat-label">Total Beban</div>
-        <div class="stat-value text-danger">{{ gross_out }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card card-soft border-{{ lr_color }}">
-      <div class="card-body">
-        <div class="stat-label">{{ lr_label }}</div>
-        <div class="stat-value text-{{ lr_color }}">{{ net }}</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card card-soft">
+<div class="card card-soft mb-4">
   <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Tanggal</th>
-            <th>Akun</th>
-            <th>Detail</th>
-            <th>Pendapatan</th>
-            <th>Beban</th>
-          </tr>
-        </thead>
+
+    {# ---- PENDAPATAN ---- #}
+    <h6 class="fw-bold text-success mb-3">Pendapatan</h6>
+    <div class="table-responsive mb-3">
+      <table class="table table-sm mb-0">
         <tbody>
-          {% for row in records %}
+          {% for row in pendapatan_rows %}
           <tr>
-            <td>{{ row.date|date:"d/m/Y H:i" }}</td>
-            <td>{{ row.type }}</td>
-            <td>{{ row.detail }}</td>
-            <td>{% if row.in_amount %}{{ row.in_amount }}{% else %}-{% endif %}</td>
-            <td>{% if row.out_amount %}{{ row.out_amount }}{% else %}-{% endif %}</td>
+            <td class="ps-3">{{ row.akun }}</td>
+            <td class="text-end">{{ row.nominal }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center py-4">Belum ada data</td>
+            <td colspan="2" class="text-muted ps-3">Tidak ada akun pendapatan</td>
           </tr>
           {% endfor %}
         </tbody>
+        <tfoot class="fw-bold border-top">
+          <tr>
+            <td class="ps-3">Total Pendapatan</td>
+            <td class="text-end text-success">{{ total_pendapatan }}</td>
+          </tr>
+        </tfoot>
       </table>
     </div>
+
+    <hr>
+
+    {# ---- BEBAN ---- #}
+    <h6 class="fw-bold text-danger mb-3">Beban</h6>
+    <div class="table-responsive mb-3">
+      <table class="table table-sm mb-0">
+        <tbody>
+          {% for row in beban_rows %}
+          <tr>
+            <td class="ps-3">{{ row.akun }}</td>
+            <td class="text-end">{{ row.nominal }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" class="text-muted ps-3">Tidak ada akun beban</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="fw-bold border-top">
+          <tr>
+            <td class="ps-3">Total Beban</td>
+            <td class="text-end text-danger">{{ total_beban }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <hr>
+
+    {# ---- LABA/RUGI BERSIH ---- #}
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 rounded bg-{{ lr_color }} bg-opacity-10 border border-{{ lr_color }}">
+      <span class="fw-bold fs-6 text-{{ lr_color }}">{{ lr_label }}</span>
+      <span class="fw-bold fs-5 text-{{ lr_color }}">{{ laba_bersih }}</span>
+    </div>
+
   </div>
 </div>
 

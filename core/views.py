@@ -170,14 +170,7 @@ def purchase_list(request):
         items = items.order_by("created_at")
     else:
         items = items.order_by("-created_at")
-        sort = get_sort_order(request)
 
-    items = Purchase.objects.select_related("seed")
-
-    if sort == "oldest":
-        items = items.order_by("created_at")
-    else:
-        items = items.order_by("-created_at")
     rows = [
         {
             "cells": [
@@ -413,16 +406,14 @@ def return_list(request):
 
     sort = get_sort_order(request)
 
-    items = ReturnTransaction.objects.select_related(
-        "seed",
-        "source_sale"
-    )
+    items = ReturnTransaction.objects.select_related("seed", "source_sale")
 
     if sort == "oldest":
         items = items.order_by("created_at")
     else:
         items = items.order_by("-created_at")
-        rows = []
+
+    rows = []
     for item in items:
         rows.append({
             "cells": [
@@ -474,7 +465,7 @@ def journal_list(request):
             return redirect("journals")
     else:
         form = JournalForm()
-    
+
     sort = get_sort_order(request)
     transactions = []
 
@@ -508,16 +499,11 @@ def journal_list(request):
     rows = merge_same_dates(rows)
 
     total_debit = sum_amount(
-        JournalEntry.objects.filter(
-            direction=JournalEntry.DEBIT
-        ),
+        JournalEntry.objects.filter(direction=JournalEntry.DEBIT),
         "amount"
     )
-
     total_kredit = sum_amount(
-        JournalEntry.objects.filter(
-            direction=JournalEntry.KREDIT
-        ),
+        JournalEntry.objects.filter(direction=JournalEntry.KREDIT),
         "amount"
     )
 
@@ -564,7 +550,6 @@ def report_view(request):
 
     mode = request.GET.get("mode", "buku_besar")
 
-    # Ambil tanggal dari GET, fallback ke default bulan ini
     try:
         from datetime import datetime
         start_date = datetime.strptime(request.GET.get("start_date", ""), "%Y-%m-%d").date()
@@ -582,6 +567,7 @@ def report_view(request):
     context = {
         "form": form,
         "mode": mode,
+        "end_date_display": end_date.strftime("%d/%m/%Y"),
     }
 
     journals = JournalEntry.objects.filter(created_at__date__range=(start_date, end_date))
@@ -589,9 +575,7 @@ def report_view(request):
     gross_in = sum_amount(
         journals.filter(direction=JournalEntry.DEBIT), "amount"
     )
-    gross_out = (
-        + sum_amount(journals.filter(direction=JournalEntry.KREDIT), "amount")
-    )
+    gross_out = sum_amount(journals.filter(direction=JournalEntry.KREDIT), "amount")
     net = gross_in - gross_out
 
     # ======================== BUKU BESAR ========================
@@ -623,39 +607,23 @@ def report_view(request):
     # ======================== NERACA SALDO ========================
     elif mode == "neraca_saldo":
 
+        account_names = journals.values_list("account_name", flat=True).distinct()
+
         neraca_rows = []
-
-        account_names = (
-            journals.values_list(
-                "account_name",
-                flat=True
-            ).distinct()
-        )
-
         total_debit_val = 0
         total_kredit_val = 0
 
         for account in account_names:
-
             debit = sum_amount(
-                journals.filter(
-                    account_name=account,
-                    direction=JournalEntry.DEBIT
-                ),
+                journals.filter(account_name=account, direction=JournalEntry.DEBIT),
                 "amount"
             )
-
             kredit = sum_amount(
-                journals.filter(
-                    account_name=account,
-                    direction=JournalEntry.KREDIT
-                ),
+                journals.filter(account_name=account, direction=JournalEntry.KREDIT),
                 "amount"
             )
-
             total_debit_val += debit
             total_kredit_val += kredit
-
             neraca_rows.append({
                 "akun": account,
                 "debit": money(debit) if debit else None,
@@ -667,12 +635,7 @@ def report_view(request):
             if total_debit_val == total_kredit_val
             else "Tidak Seimbang"
         )
-
-        neraca_color = (
-            "success"
-            if total_debit_val == total_kredit_val
-            else "danger"
-        )
+        neraca_color = "success" if total_debit_val == total_kredit_val else "danger"
 
         context.update({
             "neraca_rows": neraca_rows,
@@ -685,13 +648,21 @@ def report_view(request):
     # ======================== JURNAL PENYESUAIAN ========================
     elif mode == "jurnal_penyesuaian":
         penyesuaian_rows = []
+        last_date = None
+        end_date_str = end_date.strftime("%d/%m/%Y")
+
         for item in journals:
+            if last_date == end_date_str:
+                tanggal_display = ""
+            else:
+                tanggal_display = end_date_str
+                last_date = end_date_str
+
             penyesuaian_rows.append({
-                "date": item.created_at,
+                "date": tanggal_display,
                 "akun": item.account_name,
-                "posisi": item.get_direction_display(),
-                "nominal": money(item.amount),
-                "keterangan": item.note or "-",
+                "debit": money(item.amount) if item.direction == JournalEntry.DEBIT else None,
+                "kredit": money(item.amount) if item.direction == JournalEntry.KREDIT else None,
             })
         context["penyesuaian_rows"] = penyesuaian_rows
 
@@ -722,47 +693,55 @@ def report_view(request):
     # ======================== LABA RUGI ========================
     elif mode == "laba_rugi":
 
-        records = []
+        PENDAPATAN_KEYWORDS = ["pendapatan", "penjualan", "revenue"]
+        BEBAN_KEYWORDS = ["beban", "biaya", "kerugian", "akumulasi"]
 
-        for item in journals:
-            records.append({
-                "date": item.created_at,
-                "type": item.account_name,
-                "detail": item.note or "-",
-                "in_amount": (
-                    money(item.amount)
-                    if item.direction == JournalEntry.DEBIT
-                    else None
-                ),
-                "out_amount": (
-                    money(item.amount)
-                    if item.direction == JournalEntry.KREDIT
-                    else None
-                ),
-            })
+        def is_pendapatan(name):
+            lower = name.lower()
+            return any(kw in lower for kw in PENDAPATAN_KEYWORDS)
 
-        records.sort(
-            key=lambda x: x["date"],
-            reverse=True
-        )
+        def is_beban(name):
+            lower = name.lower()
+            return any(kw in lower for kw in BEBAN_KEYWORDS)
 
-        lr_label = (
-            "Laba Bersih"
-            if net >= 0
-            else "Rugi Bersih"
-        )
+        account_names = journals.values_list("account_name", flat=True).distinct()
 
-        lr_color = (
-            "success"
-            if net >= 0
-            else "danger"
-        )
+        pendapatan_rows = []
+        beban_rows = []
+        total_pendapatan = 0
+        total_beban = 0
+
+        for account in account_names:
+            debit = sum_amount(
+                journals.filter(account_name=account, direction=JournalEntry.DEBIT),
+                "amount"
+            )
+            kredit = sum_amount(
+                journals.filter(account_name=account, direction=JournalEntry.KREDIT),
+                "amount"
+            )
+            saldo = debit - kredit
+
+            if is_pendapatan(account):
+                val = kredit if kredit else abs(saldo)
+                total_pendapatan += val
+                pendapatan_rows.append({"akun": account, "nominal": money(val)})
+
+            elif is_beban(account):
+                val = debit if debit else abs(saldo)
+                total_beban += val
+                beban_rows.append({"akun": account, "nominal": money(val)})
+
+        laba_bersih = total_pendapatan - total_beban
+        lr_label = "Laba Bersih" if laba_bersih >= 0 else "Rugi Bersih"
+        lr_color = "success" if laba_bersih >= 0 else "danger"
 
         context.update({
-            "records": records,
-            "gross_in": money(gross_in),
-            "gross_out": money(gross_out),
-            "net": money(abs(net)),
+            "pendapatan_rows": pendapatan_rows,
+            "beban_rows": beban_rows,
+            "total_pendapatan": money(total_pendapatan),
+            "total_beban": money(total_beban),
+            "laba_bersih": money(abs(laba_bersih)),
             "lr_label": lr_label,
             "lr_color": lr_color,
         })
