@@ -550,24 +550,38 @@ def report_view(request):
 
     mode = request.GET.get("mode", "buku_besar")
 
-    try:
-        from datetime import datetime
-        start_date = datetime.strptime(request.GET.get("start_date", ""), "%Y-%m-%d").date()
-    except ValueError:
-        start_date = default_start
+    from datetime import datetime
 
-    try:
-        from datetime import datetime
-        end_date = datetime.strptime(request.GET.get("end_date", ""), "%Y-%m-%d").date()
-    except ValueError:
-        end_date = default_end
+    def parse_date(raw, fallback):
+        for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
+            try:
+                return datetime.strptime(raw, fmt).date()
+            except (ValueError, TypeError):
+                continue
+        return fallback
 
-    form = ReportFilterForm(initial={"start_date": start_date, "end_date": end_date})
+    start_date = parse_date(request.GET.get("start_date", ""), default_start)
+    end_date = parse_date(request.GET.get("end_date", ""), default_end)
+
+    form = ReportFilterForm(initial={
+        "start_date": start_date.strftime("%Y-%m-%d"),
+        "end_date": end_date.strftime("%Y-%m-%d"),
+    })
+
+    # Default selected_month untuk jurnal_penyesuaian
+    default_month_str = today.strftime("%Y-%m")
+    selected_month = request.GET.get("month", default_month_str)
+    try:
+        peny_year, peny_mo = map(int, selected_month.split("-"))
+    except (ValueError, AttributeError):
+        peny_year, peny_mo = today.year, today.month
+        selected_month = f"{peny_year:04d}-{peny_mo:02d}"
 
     context = {
         "form": form,
         "mode": mode,
         "end_date_display": end_date.strftime("%d/%m/%Y"),
+        "selected_month": selected_month,
     }
 
     journals = JournalEntry.objects.filter(created_at__date__range=(start_date, end_date))
@@ -647,24 +661,28 @@ def report_view(request):
 
     # ======================== JURNAL PENYESUAIAN ========================
     elif mode == "jurnal_penyesuaian":
+        # Hitung hari terakhir bulan yang dipilih
+        last_day_num = calendar.monthrange(peny_year, peny_mo)[1]
+        peny_first_day = date(peny_year, peny_mo, 1)
+        peny_last_day = date(peny_year, peny_mo, last_day_num)
+        last_day_display = peny_last_day.strftime("%d/%m/%Y")
+
+        # Query jurnal dalam rentang bulan yang dipilih
+        penyesuaian_journals = JournalEntry.objects.filter(
+            created_at__date__range=(peny_first_day, peny_last_day)
+        ).order_by("created_at")
+
         penyesuaian_rows = []
-        last_date = None
-        end_date_str = end_date.strftime("%d/%m/%Y")
-
-        for item in journals:
-            if last_date == end_date_str:
-                tanggal_display = ""
-            else:
-                tanggal_display = end_date_str
-                last_date = end_date_str
-
+        for item in penyesuaian_journals:
             penyesuaian_rows.append({
-                "date": tanggal_display,
+                "date": last_day_display,   # Selalu tanggal terakhir bulan, tanpa merge
                 "akun": item.account_name,
                 "debit": money(item.amount) if item.direction == JournalEntry.DEBIT else None,
                 "kredit": money(item.amount) if item.direction == JournalEntry.KREDIT else None,
             })
+
         context["penyesuaian_rows"] = penyesuaian_rows
+        context["end_date_display"] = last_day_display
 
     # ======================== JURNAL PENUTUP ========================
     elif mode == "jurnal_penutup":
@@ -693,8 +711,8 @@ def report_view(request):
     # ======================== LABA RUGI ========================
     elif mode == "laba_rugi":
 
-        PENDAPATAN_KEYWORDS = ["pendapatan", "penjualan", "revenue"]
-        BEBAN_KEYWORDS = ["beban", "biaya", "kerugian", "akumulasi"]
+        PENDAPATAN_KEYWORDS = ["pendapatan"]
+        BEBAN_KEYWORDS = ["beban"]
 
         def is_pendapatan(name):
             lower = name.lower()

@@ -21,7 +21,7 @@
        class="btn {% if mode == 'neraca_saldo' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
       Neraca Saldo
     </a>
-    <a href="?mode=jurnal_penyesuaian{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}"
+    <a href="?mode=jurnal_penyesuaian{% if selected_month %}&month={{ selected_month }}{% endif %}"
        class="btn {% if mode == 'jurnal_penyesuaian' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
       Jurnal Penyesuaian
     </a>
@@ -36,8 +36,28 @@
   </div>
 </div>
 
+{# ===== Filter Card: kondisional berdasarkan mode ===== #}
 <div class="card card-soft mb-4 no-print">
   <div class="card-body">
+
+    {% if mode == 'jurnal_penyesuaian' %}
+    {# Filter khusus Jurnal Penyesuaian: pilih bulan saja #}
+    <form method="get" class="row g-3 align-items-end">
+      <input type="hidden" name="mode" value="jurnal_penyesuaian">
+      <div class="col-md-4">
+        <label class="form-label">Bulan</label>
+        <input type="month" name="month" value="{{ selected_month }}" class="form-control">
+      </div>
+      <div class="col-auto d-flex gap-2">
+        <button class="btn btn-primary">Tampilkan</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="downloadPDF()">
+          Download PDF
+        </button>
+      </div>
+    </form>
+
+    {% else %}
+    {# Filter umum: rentang tanggal #}
     <form method="get" class="row g-3">
       <input type="hidden" name="mode" value="{{ mode }}">
       {% for field in form %}
@@ -53,6 +73,8 @@
         </button>
       </div>
     </form>
+    {% endif %}
+
   </div>
 </div>
 
@@ -66,8 +88,10 @@
     {% elif mode == 'laba_rugi' %}Laporan Laba Rugi
     {% endif %}
   </h4>
-  {% if request.GET.start_date %}
-  <p>Periode: {{ request.GET.start_date }} s/d {{ request.GET.end_date }}</p>
+  {% if mode == 'jurnal_penyesuaian' %}
+    <p>Periode: {{ selected_month }}</p>
+  {% elif request.GET.start_date %}
+    <p>Periode: {{ request.GET.start_date }} s/d {{ request.GET.end_date }}</p>
   {% endif %}
 </div>
 
