@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
 DEBUG = os.getenv("DEBUG", "False") == "True"
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "*"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "gardenxi.up.railway.app"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -66,7 +66,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://gardenxi.up.railway.app/",  # ← ganti dengan domain Railway kamu
+    "https://*.up.railway.app",  # ← ganti dengan domain Railway kamu
 ]
 
 LANGUAGE_CODE = "id"
