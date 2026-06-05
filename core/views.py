@@ -1,7 +1,8 @@
 import calendar
+from decimal import Decimal
 import json
 from datetime import date
-from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -20,7 +21,8 @@ def money(value):
 
 
 def sum_amount(qs, field_name):
-    return qs.aggregate(total=Sum(field_name))["total"] or 0
+    result = qs.aggregate(total=Sum(field_name))["total"]
+    return result if result is not None else Decimal("0")
 
 def merge_same_dates(rows):
     last_date = None
@@ -511,11 +513,11 @@ def journal_list(request):
         "amount"
     )
 
-    balance = Decimal(str(total_debit)) - Decimal(str(total_kredit))
+    balance = (int(total_debit)) - (int(total_kredit))
     balance_status = "Balance" if balance == 0 else "Unbalance"
     balance_color = "success" if balance == 0 else "danger"
     balance_note = (
-        f"Lebih {money(balance)}" if balance > 0
+        f"Lebih {money(balance)}" if balance > 0    
         else "Seimbang" if balance == 0
         else f"Kurang {money(abs(balance))}"
     )
