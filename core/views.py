@@ -157,6 +157,7 @@ def purchase_list(request):
                 seed=seed,
                 qty=data["qty"],
                 unit_price=data["unit_price"],
+                created_at=data["created_at"],
             )
             messages.success(request, "Data pembelian berhasil disimpan.")
             return redirect("purchases")
@@ -236,6 +237,7 @@ def harvest_list(request):
                 seed=seed,
                 qty=data["qty"],
                 note=data["note"],
+                created_at=data["created_at"],
             )
             messages.success(request, "Stok panen berhasil disimpan.")
             return redirect("harvests")
@@ -268,7 +270,7 @@ def harvest_list(request):
         "page_title": "Stok Panen",
         "page_subtitle": "Kelola stok hasil panen. Stok ini digunakan sebagai sumber penjualan.",
         "add_title": "Tambah Stok Panen",
-        "columns": ["Tanggal", "Barang", "Qty Masuk", "Stok Tersedia", "Keterangan"],
+        "columns": ["Tanggal", "Barang", "Qty (Kg) Masuk", "Stok Tersedia", "Keterangan"],
         "form": form,
         "rows": rows,
         "current_sort": sort,
@@ -319,6 +321,7 @@ def sale_list(request):
                 seed=seed,
                 qty=qty,
                 unit_price=unit_price,
+                created_at=data["created_at"],
             )
             messages.success(request, "Data penjualan berhasil disimpan.")
             return redirect("sales")
@@ -398,6 +401,7 @@ def return_list(request):
                 seed=sale_obj.seed,
                 qty=qty,
                 unit_price=sale_obj.unit_price,
+                created_at=data["created_at"],
             )
             messages.success(request, "Data retur berhasil disimpan.")
             return redirect("returns")

@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import models
+from django.utils import timezone
 
 
 class Seed(models.Model):
@@ -19,7 +20,7 @@ class Purchase(models.Model):
     qty = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=14, decimal_places=2)
     total_out = models.DecimalField(max_digits=14, decimal_places=2, editable=False, default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["-created_at"]
@@ -36,7 +37,7 @@ class HarvestStock(models.Model):
     seed = models.ForeignKey(Seed, on_delete=models.PROTECT, related_name="harvest_stocks")
     qty = models.PositiveIntegerField()
     note = models.CharField(max_length=255, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["-created_at"]
@@ -51,7 +52,7 @@ class Sale(models.Model):
     qty = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=14, decimal_places=2)
     total_in = models.DecimalField(max_digits=14, decimal_places=2, editable=False, default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["-created_at"]
@@ -77,7 +78,7 @@ class ReturnTransaction(models.Model):
     qty = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=14, decimal_places=2)
     total_out = models.DecimalField(max_digits=14, decimal_places=2, editable=False, default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["-created_at"]
@@ -107,7 +108,7 @@ class JournalEntry(models.Model):
     direction = models.CharField(max_length=3, choices=DIRECTION_CHOICES)
     amount = models.DecimalField(max_digits=14, decimal_places=2)
     note = models.CharField(max_length=255, blank=True)
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["-created_at"]

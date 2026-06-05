@@ -29,19 +29,26 @@ class PurchaseForm(BootstrapFormMixin, forms.Form):
         max_digits=14,
         decimal_places=2,
     )
+    created_at = forms.DateTimeField(
+        label="Tanggal & Jam",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
 
 
 class HarvestStockForm(BootstrapFormMixin, forms.Form):
     seed_name = forms.CharField(label="Nama Barang")
     qty = forms.IntegerField(
-        label="Qty",
+        label="Qty (Kg)",
         min_value=1,
     )
     note = forms.CharField(
         label="Keterangan",
         required=False,
     )
-
+    created_at = forms.DateTimeField(
+        label="Tanggal & Jam",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["note"].widget = forms.TextInput()
@@ -57,7 +64,7 @@ class SaleForm(BootstrapFormMixin, forms.Form):
     )
 
     qty = forms.IntegerField(
-        label="Qty",
+        label="Qty (Kg)",
         min_value=1,
     )
 
@@ -66,6 +73,10 @@ class SaleForm(BootstrapFormMixin, forms.Form):
         min_value=0,
         max_digits=14,
         decimal_places=2,
+    )
+    created_at = forms.DateTimeField(
+        label="Tanggal & Jam",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -103,8 +114,13 @@ class ReturnForm(BootstrapFormMixin, forms.Form):
     )
 
     qty = forms.IntegerField(
-        label="Qty Retur",
+        label="Qty (Kg) Retur",
         min_value=1,
+    )
+
+    created_at = forms.DateTimeField(
+        label="Tanggal & Jam",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
     )
 
     def __init__(self, *args, **kwargs):
