@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
 DEBUG = os.getenv("DEBUG", "False") == "True"
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "gardenxi.up.railway.app", "gardenxi.vercel.app"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "gardenxi.up.railway.app", "gardenxi.vercel.app", "gardenxi-4602bnele-htech5s-projects.vercel.app"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
