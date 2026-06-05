@@ -1,7 +1,7 @@
 import calendar
 import json
 from datetime import date
-
+from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -511,7 +511,7 @@ def journal_list(request):
         "amount"
     )
 
-    balance = total_debit - total_kredit
+    balance = Decimal(str(total_debit)) - Decimal(str(total_kredit))
     balance_status = "Balance" if balance == 0 else "Unbalance"
     balance_color = "success" if balance == 0 else "danger"
     balance_note = (
