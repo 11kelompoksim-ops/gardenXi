@@ -67,7 +67,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.up.railway.app",  # ← ganti dengan domain Railway kamu
-    "https://*.vercel.app",  # ← ganti dengan domain Vercel kamu
+    "https://*.vercel.app",
+    "https://gardenxi-4602bnele-htech5s-projects.vercel.app",  # ← ganti dengan domain Vercel kamu
 ]
 
 LANGUAGE_CODE = "id"
