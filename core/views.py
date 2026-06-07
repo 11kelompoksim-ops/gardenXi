@@ -626,39 +626,48 @@ def report_view(request):
 
     # ======================== NERACA SALDO ========================
     elif mode == "neraca_saldo":
-
         account_names = journals.values_list("account_name", flat=True).distinct()
 
-        neraca_rows = []
-        total_debit_val = 0
-        total_kredit_val = 0
+        neraca_accounts = []
+        total_debit_val = Decimal("0")
+        total_kredit_val = Decimal("0")
 
         for account in account_names:
-            debit = sum_amount(
-                journals.filter(account_name=account, direction=JournalEntry.DEBIT),
-                "amount"
-            )
-            kredit = sum_amount(
-                journals.filter(account_name=account, direction=JournalEntry.KREDIT),
-                "amount"
-            )
-            total_debit_val += debit
-            total_kredit_val += kredit
-            neraca_rows.append({
+            entries = journals.filter(account_name=account).order_by("created_at")
+
+            account_rows = []
+            account_debit = Decimal("0")
+            account_kredit = Decimal("0")
+
+            for entry in entries:
+                d = entry.amount if entry.direction == JournalEntry.DEBIT else Decimal("0")
+                k = entry.amount if entry.direction == JournalEntry.KREDIT else Decimal("0")
+                account_debit += d
+                account_kredit += k
+                account_rows.append({
+                    "date": entry.created_at.strftime("%d/%m/%Y"),
+                    "note": entry.note or "-",
+                    "debit": money(d) if d else None,
+                    "kredit": money(k) if k else None,
+                })
+
+            total_debit_val += account_debit
+            total_kredit_val += account_kredit
+
+            neraca_accounts.append({
                 "akun": account,
-                "debit": money(debit) if debit else None,
-                "kredit": money(kredit) if kredit else None,
+                "rows": account_rows,
+                "total_debit": money(account_debit),
+                "total_kredit": money(account_kredit),
             })
 
         neraca_status = (
-            "Seimbang"
-            if total_debit_val == total_kredit_val
-            else "Tidak Seimbang"
+            "Seimbang" if total_debit_val == total_kredit_val else "Tidak Seimbang"
         )
         neraca_color = "success" if total_debit_val == total_kredit_val else "danger"
 
         context.update({
-            "neraca_rows": neraca_rows,
+            "neraca_accounts": neraca_accounts,
             "total_debit": money(total_debit_val),
             "total_kredit": money(total_kredit_val),
             "neraca_status": neraca_status,
@@ -667,21 +676,19 @@ def report_view(request):
 
     # ======================== JURNAL PENYESUAIAN ========================
     elif mode == "jurnal_penyesuaian":
-        # Hitung hari terakhir bulan yang dipilih
         last_day_num = calendar.monthrange(peny_year, peny_mo)[1]
-        peny_first_day = date(peny_year, peny_mo, 1)
         peny_last_day = date(peny_year, peny_mo, last_day_num)
         last_day_display = peny_last_day.strftime("%d/%m/%Y")
 
-        # Query jurnal dalam rentang bulan yang dipilih
+        # Hanya ambil entry yang diinput tepat di tanggal terakhir bulan
         penyesuaian_journals = JournalEntry.objects.filter(
-            created_at__date__range=(peny_first_day, peny_last_day)
+            created_at__date=peny_last_day
         ).order_by("created_at")
 
         penyesuaian_rows = []
         for item in penyesuaian_journals:
             penyesuaian_rows.append({
-                "date": last_day_display,   # Selalu tanggal terakhir bulan, tanpa merge
+                "date": last_day_display,
                 "akun": item.account_name,
                 "debit": money(item.amount) if item.direction == JournalEntry.DEBIT else None,
                 "kredit": money(item.amount) if item.direction == JournalEntry.KREDIT else None,

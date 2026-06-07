@@ -148,9 +148,10 @@
 {% elif mode == 'neraca_saldo' %}
 
 <p class="text-muted mb-3">
-  Daftar seluruh akun beserta total saldo debit dan kredit dalam periode yang dipilih. Dikelompokkan sesuai standar akuntansi.
+  Daftar seluruh akun beserta total saldo debit dan kredit dalam periode yang dipilih. Setiap akun ditampilkan dalam tabel terpisah.
 </p>
 
+{# Ringkasan Grand Total #}
 <div class="row g-3 mb-4">
   <div class="col-md-4">
     <div class="card card-soft">
@@ -178,48 +179,59 @@
   </div>
 </div>
 
-<div class="card card-soft">
+{# Tabel per akun #}
+{% for akun_data in neraca_accounts %}
+<div class="card card-soft mb-4">
   <div class="card-body">
+    <h6 class="fw-bold mb-3">{{ akun_data.akun }}</h6>
     <div class="table-responsive">
       <table class="table table-hover mb-0">
         <thead>
           <tr>
-            <th>Nama Akun</th>
+            <th>Tanggal</th>
+            <th>Keterangan</th>
             <th>Debit</th>
             <th>Kredit</th>
           </tr>
         </thead>
         <tbody>
-          {% for row in neraca_rows %}
+          {% for row in akun_data.rows %}
           <tr>
-            <td>{{ row.akun }}</td>
+            <td>{{ row.date }}</td>
+            <td>{{ row.note }}</td>
             <td>{% if row.debit %}{{ row.debit }}{% else %}-{% endif %}</td>
             <td>{% if row.kredit %}{{ row.kredit }}{% else %}-{% endif %}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="3" class="text-center py-4">Belum ada data</td>
+            <td colspan="4" class="text-center py-3">Belum ada data</td>
           </tr>
           {% endfor %}
         </tbody>
         <tfoot class="fw-bold table-light">
           <tr>
-            <td>Total</td>
-            <td>{{ total_debit }}</td>
-            <td>{{ total_kredit }}</td>
+            <td colspan="2">Total</td>
+            <td>{{ akun_data.total_debit }}</td>
+            <td>{{ akun_data.total_kredit }}</td>
           </tr>
         </tfoot>
       </table>
     </div>
   </div>
 </div>
+{% empty %}
+<div class="card card-soft">
+  <div class="card-body text-center py-4 text-muted">Belum ada data untuk periode ini.</div>
+</div>
+{% endfor %}
 
 
 {# ======================== JURNAL PENYESUAIAN ======================== #}
 {% elif mode == 'jurnal_penyesuaian' %}
 
 <p class="text-muted mb-3">
-  Jurnal penyesuaian per tanggal akhir periode: <strong>{{ end_date_display }}</strong>.
+  Jurnal penyesuaian per tanggal akhir bulan: <strong>{{ end_date_display }}</strong>.
+  Hanya menampilkan akun yang diinput pada tanggal tersebut.
 </p>
 
 <div class="card card-soft">
@@ -244,7 +256,9 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="4" class="text-center py-4">Belum ada data jurnal penyesuaian</td>
+            <td colspan="4" class="text-center py-4 text-muted">
+              Tidak ada jurnal yang diinput pada tanggal <strong>{{ end_date_display }}</strong>.
+            </td>
           </tr>
           {% endfor %}
         </tbody>
